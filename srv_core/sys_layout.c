@@ -51,7 +51,7 @@ int build_partitions_(struct sys_layout *self, const char *arch_file,
 	struct tokens *tokens = NULL;
 
 	const char *part_name;
-	unsigned int part_slots_count;
+	int part_slots_count;
 
 	struct slot *slot = NULL;
 	char dev_name[MAX_NAMES];
@@ -76,7 +76,7 @@ int build_partitions_(struct sys_layout *self, const char *arch_file,
 	}
 
 	// Create partitions
-	for (unsigned int p = 0; p < self->partitions_count; ++p) {
+	for (int p = 0; p < self->partitions_count; ++p) {
 		// Partition name (first token in the line)
 		part_name = pars_get_token(tokens, p, 0);
 		// Number of slots (second token)
@@ -91,7 +91,7 @@ int build_partitions_(struct sys_layout *self, const char *arch_file,
 		}
 
 		// Populate each slot
-		for (unsigned int s = 0; s < part_slots_count; ++s) {
+		for (int s = 0; s < part_slots_count; ++s) {
 			// Init UIO device driver for slot and decoupler
 			// Names must match device tree names
 			sprintf(dev_name, "slot_p%u_s%u", p, s);
@@ -124,7 +124,7 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 	uint32_t hw_task_id;
 	const char *part_name = NULL;
 	const char *bits_path = NULL;
-	unsigned int data_buffs_count;
+	int data_buffs_count;
 	unsigned int data_buff_size;
 
 	DBG_PRINT("fred_sys: building hw-tasks\n");
@@ -146,7 +146,7 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 	}
 
 	// Populate hw tasks array
-	for (unsigned int i = 0; i < self->hw_tasks_count; ++i) {
+	for (int i = 0; i < self->hw_tasks_count; ++i) {
 
 		// Get hw-task name (first token in the line)
 		hw_task_name = pars_get_token(tokens, i, 0);
@@ -158,7 +158,7 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 		bits_path = pars_get_token(tokens, i, 3);
 
 		// Find partition
-		for (unsigned int j = 0; j < self->partitions_count; ++j) {
+		for (int j = 0; j < self->partitions_count; ++j) {
 			if (!strncmp(part_name, partition_get_name(self->partitions[j]),MAX_NAMES)) {
 				partition = self->partitions[j];
 				break;
@@ -183,7 +183,7 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 
 		// The reminder tokens (after fourth initial tokens) define the buffers
 		data_buffs_count = pars_get_num_tokens(tokens, i) - 4;
-		for (unsigned int b = 0; b < data_buffs_count; ++b) {
+		for (int b = 0; b < data_buffs_count; ++b) {
 			data_buff_size = str_to_size_(pars_get_token(tokens, i, b + 4));
 			retval = hw_task_add_buffer(self->hw_tasks[i], data_buff_size);
 			if (retval)

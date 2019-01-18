@@ -67,13 +67,18 @@ void free_(void *self)
 
 int devcfg_init(struct devcfg **self)
 {
+	int retval;
+
 	*self = calloc(1, sizeof(**self));
 	if (!(*self))
 		return -1;
 
 	event_handler_assign_id(&(*self)->handler);
 
-	devcfg_drv_init(&(*self)->drv);
+	retval = devcfg_drv_init(&(*self)->drv);
+	if (retval) {
+		return -1;
+	}
 
 	// Set properties and methods
 	(*self)->state = DEVCFG_INIT;

@@ -29,10 +29,10 @@ struct slot;
 
 struct partition {
 	char name[MAX_NAMES];
-	unsigned int index;
+	int index;
 
 	struct slot *slots[MAX_SLOTS];
-	unsigned int slots_count;
+	int slots_count;
 };
 
 //---------------------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ const char* partition_get_name(const struct partition *self)
 }
 
 static inline
-unsigned int partition_get_index(const struct partition *self)
+int partition_get_index(const struct partition *self)
 {
 	assert(self);
 
@@ -54,7 +54,7 @@ unsigned int partition_get_index(const struct partition *self)
 }
 
 static inline
-unsigned int partition_get_slots_count(const struct partition *self)
+int partition_get_slots_count(const struct partition *self)
 {
 	assert(self);
 
@@ -63,7 +63,7 @@ unsigned int partition_get_slots_count(const struct partition *self)
 
 //---------------------------------------------------------------------------------------------
 
-int partition_init(struct partition **self, const char *name, unsigned int index);
+int partition_init(struct partition **self, const char *name, int index);
 
 void partition_free(struct partition *self);
 

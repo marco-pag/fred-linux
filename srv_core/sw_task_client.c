@@ -34,13 +34,13 @@ int alloc_data_buff_(struct sw_task_client *self, int task_idx)
 {
 	int retval;
 	const unsigned int *data_buffs_sizes;
-	unsigned int data_buffs_count;
+	int data_buffs_count;
 
 	data_buffs_count = hw_task_get_data_buffs_count(self->hw_tasks[task_idx]);
 	data_buffs_sizes = hw_task_get_data_buffs_sizes(self->hw_tasks[task_idx]);
 
 	// Allocate all data buffers for that hw-task
-	for (unsigned int i = 0; i < data_buffs_count; ++i) {
+	for (int i = 0; i < data_buffs_count; ++i) {
 		retval = buffctl_alloc_buff(self->buffctl,
 									&(self->data_buffs_ifs[task_idx][i]),
 									data_buffs_sizes[i]);
@@ -55,8 +55,8 @@ int alloc_data_buff_(struct sw_task_client *self, int task_idx)
 static
 void free_all_data_buff_(struct sw_task_client *self)
 {
-	for (unsigned int i = 0; i < self->hw_tasks_count; ++i) {
-		for (unsigned int j = 0; j < MAX_DATA_BUFFS; ++j) {
+	for (int i = 0; i < self->hw_tasks_count; ++i) {
+		for (int j = 0; j < MAX_DATA_BUFFS; ++j) {
 			if (self->data_buffs_ifs[i][j])
 				buffctl_free_buff(self->buffctl, self->data_buffs_ifs[i][j]);
 		}
@@ -117,7 +117,7 @@ static
 int send_user_data_buffs_(struct sw_task_client *self, int task_idx)
 {
 	int retval;
-	unsigned int data_buffs_count;
+	int data_buffs_count;
 	const unsigned int *data_buffs_sizes;
 	char usr_dev_name[MAX_PATH];
 
@@ -167,7 +167,7 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 	int idx;
 	int retval;
 	struct hw_task *hw_task = NULL;
-	unsigned int data_buffs_count;
+	int data_buffs_count;
 
 	switch (fred_msg_get_head(msg)) {
 	case FRED_MSG_INIT:
@@ -250,7 +250,7 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 			// Set hardware arguments (memory buffer pointers)
 			data_buffs_count = hw_task_get_data_buffs_count(self->hw_tasks[idx]);
 			accel_req_set_args_size(&self->accel_req, data_buffs_count);
-			for (unsigned int j = 0; j < data_buffs_count; ++j) {
+			for (int j = 0; j < data_buffs_count; ++j) {
 				accel_req_set_args(&self->accel_req, j,
 					fred_buff_if_get_phy_addr(self->data_buffs_ifs[idx][j]));
 			}
@@ -260,6 +260,7 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 		break;
 
 	default:
+		retval = send_fred_message_(self->conn_sock, FRED_MSG_ERROR, 0);
 		break;
 	}
 

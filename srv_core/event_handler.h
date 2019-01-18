@@ -29,7 +29,7 @@
 
 struct event_handler {
 	void *self;
-	unsigned int id;
+	int id;
 
 	int (*get_fd_handle)(void *self);
 	int (*handle_event)(void *self);
@@ -43,7 +43,7 @@ struct event_handler {
 static inline
 void event_handler_assign_id(struct event_handler *self)
 {
-	static unsigned int id_counter = 0;
+	static int id_counter = 0;
 
 	assert(self);
 
@@ -51,7 +51,7 @@ void event_handler_assign_id(struct event_handler *self)
 }
 
 static inline
-unsigned int event_handler_get_id(struct event_handler *self)
+int event_handler_get_id(struct event_handler *self)
 {
 	assert(self);
 

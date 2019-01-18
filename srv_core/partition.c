@@ -92,7 +92,7 @@ void partiton_print(const struct partition *self, char *str, int str_size)
 				self->index, self->name, self->slots_count);
 }
 
-int partition_init(struct partition **self, const char *name, unsigned int index)
+int partition_init(struct partition **self, const char *name, int index)
 {
 	*self = calloc(1, sizeof(**self));
 	if (!(*self))

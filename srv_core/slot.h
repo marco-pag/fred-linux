@@ -54,7 +54,7 @@ struct slot {
 		SLOT_IDLE		// Idle (configured with an hw-task)
 	} state;
 
-	unsigned int index;
+	int index;
 
 	// Fred scheduler
 	struct scheduler *sched;
@@ -81,7 +81,7 @@ struct event_handler *slot_get_event_handler(struct slot *self)
 //---------------------------------------------------------------------------------------------
 
 static inline
-unsigned int slot_get_index(const struct slot *self)
+int slot_get_index(const struct slot *self)
 {
 	assert(self);
 
@@ -197,7 +197,7 @@ void slot_clear_after_compute(struct slot *self)
 
 //---------------------------------------------------------------------------------------------
 
-int slot_init(struct slot **self, unsigned int index, const char *dev_name,
+int slot_init(struct slot **self, int index, const char *dev_name,
 				const char *dec_dev_name, struct scheduler *sched);
 
 void slot_free(struct slot *self);

@@ -21,6 +21,64 @@
 
 //---------------------------------------------------------------------------------------------
 
+static
+uint32_t swab32_(uint32_t x)
+{
+	return x << 24 | x >> 24 |
+			(x & (uint32_t)0x0000ff00UL) << 8 |
+			(x & (uint32_t)0x00ff0000UL) >> 8;
+}
+
+// Straight from Xilinx's code. Returns the new size.
+static
+size_t mangle_bitstream_(uint8_t *bitstream, size_t length)
+{
+	int i;
+	int endian_swap = 0;
+	uint32_t *bs_wrd;
+
+	// First block contains a header
+	if (length > 4) {
+		// Look for sync word
+		for (i = 0; i < length - 4; i++) {
+			if (memcmp(bitstream + i, "\x66\x55\x99\xAA", 4) == 0) {
+				DBG_PRINT("fred_sys: bitstream: found normal sync word\n");
+				endian_swap = 0;
+				break;
+			}
+			if (memcmp(bitstream + i, "\xAA\x99\x55\x66", 4) == 0) {
+				DBG_PRINT("fred_sys: bitstream: found swapped sync word\n");
+				endian_swap = 1;
+				break;
+			}
+		}
+
+		// Remove the header, aligning the data on word boundary
+		if (i != length - 4) {
+			length -= i;
+			DBG_PRINT("fred_sys: bitstream: removing the header\n");
+			memmove(bitstream, bitstream + i, length);
+		}
+	}
+
+	// Fixup endianess of the data
+	if (endian_swap) {
+		for (i = 0; i < length; i += 4) {
+			bs_wrd = (uint32_t *)&bitstream[i];
+			*bs_wrd = swab32_(*bs_wrd);
+		}
+		DBG_PRINT("fred_sys: bitstream: endianess fixed\n");
+	}
+
+	// Convert number of bytes to number of words.
+	if (length % 4)
+		return (length / 4 + 1);
+	else
+		return length / 4;
+}
+
+//---------------------------------------------------------------------------------------------
+
 // Helper function. Take advantage of the same code for mapping data buffer
 // to map bistream buffer for bitstream loading
 static
@@ -44,9 +102,10 @@ int gen_user_buffs_(struct fred_buff_if *buff_if, struct fred_user_buff *buff_us
 
 // NOTE: this part will change with the new reconfiguration driver
 static
-int load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_buff_if **buff_if)
+ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_buff_if **buff_if)
 {
 	int retval;
+	ssize_t length;
 	void *buff_v;
 	struct fred_user_buff user_buffer;
 
@@ -57,7 +116,7 @@ int load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_buff_
 	file_p = fopen(file_name, "r");
 	if (!file_p) {
 		DBG_PRINT("fred_sys: could not open bitstream file %s\n", file_name);
-		return 0;
+		return -1;
 	}
 
 	// Get file length
@@ -69,7 +128,7 @@ int load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_buff_
 	retval = buffctl_alloc_buff(buffctl, buff_if, file_size);
 	if (retval) {
 		DBG_PRINT("fred_sys: could not allocate buffer for bitstream %s\n", file_name);
-		return retval;
+		return -1;
 	}
 
 	// Reuse the code for mapping user buffer to fill the buffer
@@ -86,13 +145,17 @@ int load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_buff_
 
 	if (b_read != file_size) {
 		DBG_PRINT("fred_sys: size mismatch for bitstream %s\n", file_name);
-		retval = -1;
+		return -1;
 	}
+
+	// Mangle returns the size for the xdevcfg
+	length = mangle_bitstream_((uint8_t *)fred_buff_if_get_phy_addr(*buff_if),
+								fred_buff_if_get_lenght(*buff_if));
 
 	// Unmap bistream buffer from server process virtual address space
 	fred_buff_unmap(&user_buffer);
 
-	return retval;
+	return length;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -122,9 +185,9 @@ int hw_task_init(struct hw_task **self, uint32_t hw_id, const char *name,
 					const char *bits_path, struct partition *partition,
 					buffctl_ft *buffctl)
 {
-	int retval;
+	ssize_t xdev_length;
 	char bit_path[MAX_PATH];
-	unsigned int bits_count;
+	int bits_count;
 	const char *part_name;
 
 	// Allocate and set everything to 0
@@ -146,14 +209,14 @@ int hw_task_init(struct hw_task **self, uint32_t hw_id, const char *name,
 				FRED_PATH, bits_path, part_name, (*self)->name, i);
 
 		// Load bitstream
-		retval = load_bit_buffer_dev_(buffctl, bit_path, &((*self)->bits_buffs[i]));
-		if (retval) {
+		xdev_length = load_bit_buffer_dev_(buffctl, bit_path, &((*self)->bits_buffs[i]));
+		if (xdev_length < 0) {
 			DBG_PRINT("fred_sys: error while reading bit file: %s\n", bit_path);
 			return -1;
 		}
 
 		// Fill buffer for xdevcfg with buffers coordinates
-		(*self)->bits_phys[i].length = fred_buff_if_get_lenght((*self)->bits_buffs[i]);
+		(*self)->bits_phys[i].length = xdev_length;
 		(*self)->bits_phys[i].phy_addr = fred_buff_if_get_phy_addr((*self)->bits_buffs[i]);
 
 		DBG_PRINT("fred_sys: loaded slot %u bitstream for hw-task %s, size: %u\n",
@@ -166,7 +229,7 @@ int hw_task_init(struct hw_task **self, uint32_t hw_id, const char *name,
 
 void hw_task_free(struct hw_task *self, buffctl_ft *buffctl)
 {
-	unsigned int bits_count;
+	int bits_count;
 
 	if (!self)
 		return;

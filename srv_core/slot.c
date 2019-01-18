@@ -67,7 +67,7 @@ void free_(void *self)
 
 //---------------------------------------------------------------------------------------------
 
-int slot_init(struct slot **self, unsigned int index, const char *dev_name,
+int slot_init(struct slot **self, int index, const char *dev_name,
 				const char *dec_dev_name, struct scheduler *sched)
 {
 	int retval;

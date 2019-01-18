@@ -37,7 +37,7 @@ struct sw_task_client {
 	} state;
 
 	struct hw_task *hw_tasks[MAX_HW_TASKS];		// Associated hw-tasks
-	unsigned int hw_tasks_count;
+	int hw_tasks_count;
 
 	// And data buffers (one set for each hw-task)
 	struct fred_buff_if *data_buffs_ifs[MAX_HW_TASKS][MAX_DATA_BUFFS];

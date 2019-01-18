@@ -95,7 +95,7 @@ int slot_drv_start_compute(uio_dev_ft *uio_dev, const args_t *args, int args_siz
 	// Check if the module is ready
 	reg = REG_READ(base_addr, SLOT_CTRL_BUS_ADDR_AP_CTRL);
 	if (reg & 0x1) {
-		DBG_PRINT(stderr, "slot_drv: error: hw accelerator is not ready! \n\r");
+		DBG_PRINT("slot_drv: error: hw accelerator is not ready!\n");
 		return -1;
 	}
 

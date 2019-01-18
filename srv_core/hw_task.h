@@ -39,7 +39,7 @@ struct hw_task {
 	// Data buffers info (to be used when new buffs for
 	// a client must be allocated)
 	unsigned int data_buffs_sizes[MAX_DATA_BUFFS];
-	unsigned int data_buffs_count;
+	int data_buffs_count;
 };
 
 // [1] Redundant glue struct, will change with the new reconfiguration driver
@@ -70,7 +70,7 @@ struct partition *hw_task_get_partition(const struct hw_task *self)
 }
 
 static inline
-unsigned int hw_task_get_data_buffs_count(const struct hw_task *self)
+int hw_task_get_data_buffs_count(const struct hw_task *self)
 {
 	assert(self);
 
@@ -87,7 +87,7 @@ const unsigned int *hw_task_get_data_buffs_sizes(const struct hw_task *self)
 
 static inline
 const struct phy_bitstream *hw_task_get_bit_phy(const struct hw_task *self,
-												unsigned int slot_idx)
+												int slot_idx)
 {
 	assert(self);
 	assert(slot_idx < partition_get_slots_count(self->partition));

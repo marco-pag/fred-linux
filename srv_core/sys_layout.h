@@ -23,10 +23,10 @@
 
 struct sys_layout {
 	struct partition *partitions[MAX_PARTITIONS];
-	unsigned int partitions_count;
+	int partitions_count;
 
 	struct hw_task *hw_tasks[MAX_HW_TASKS];
-	unsigned int hw_tasks_count;
+	int hw_tasks_count;
 
 	buffctl_ft *buffctl;
 };

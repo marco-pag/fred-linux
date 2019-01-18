@@ -28,7 +28,7 @@ int main ()
 
 	sched_mode_set_fp(0);
 
-	printf("Fred: Hello!\n");
+	printf("Fred test: starting...\n");
 
 	fred_sys_init(&fred_sys, ARCH_FILE, HW_TASKS);
 
@@ -37,7 +37,7 @@ int main ()
 
 	fred_sys_free(fred_sys);
 
-	printf("Fred: Ciao\n");
+	printf("Fred test: end\n");
 
 	return 0;
 }
