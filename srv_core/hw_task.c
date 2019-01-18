@@ -149,8 +149,7 @@ ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_b
 	}
 
 	// Mangle returns the size for the xdevcfg
-	length = mangle_bitstream_((uint8_t *)fred_buff_if_get_phy_addr(*buff_if),
-								fred_buff_if_get_lenght(*buff_if));
+	length = mangle_bitstream_(buff_v, file_size);
 
 	// Unmap bistream buffer from server process virtual address space
 	fred_buff_unmap(&user_buffer);
