@@ -70,11 +70,7 @@ size_t mangle_bitstream_(uint8_t *bitstream, size_t length)
 		DBG_PRINT("fred_sys: bitstream: endianess fixed\n");
 	}
 
-	// Convert number of bytes to number of words.
-	if (length % 4)
-		return (length / 4 + 1);
-	else
-		return length / 4;
+	return length;
 }
 
 //---------------------------------------------------------------------------------------------
