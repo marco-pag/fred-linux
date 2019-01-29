@@ -102,8 +102,8 @@ int slot_drv_start_compute(uio_dev_ft *uio_dev, const args_t *args, int args_siz
 	// Feed arguments to the accelerator trough AXI control bus
 	for (int i = 0; i < args_size; i += ARGS_OFFSET) {
 		REG_WRITE(base_addr,
-					SLOT_CTRL_BUS_ADDR_ARGS_BASE + i * (SLOT_CTRL_BUS_WIDTH_ARGS / 4),
-					args[i]);
+					SLOT_CTRL_BUS_ADDR_ARGS_BASE + i * (SLOT_CTRL_BUS_WIDTH_ARGS / 8),
+					args[i / ARGS_OFFSET]);
 	}
 
 	// Check if the module is ready
