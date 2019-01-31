@@ -74,14 +74,14 @@ int set_fd_nonblock_(int fd)
 
 	flags = fcntl(fd, F_GETFL, 0);
 	if (flags < 0) {
-		DBG_PRINT("fred_sys: error on fcntl get flags\n");
+		ERROR_PRINT("fred_sys: error on fcntl get flags\n");
 		return -1;
 	}
 
 	flags |= O_NONBLOCK;
 	retval = fcntl(fd, F_SETFL, flags);
 	if (retval < 0) {
-		DBG_PRINT("fred_sys: error on fcntl set flags\n");
+		ERROR_PRINT("fred_sys: error on fcntl set flags\n");
 		return -1;
 	}
 
@@ -95,7 +95,7 @@ int write_to_client_(int socket, const void *data, unsigned int data_len)
 
 	retval = write(socket, data, data_len);
 	if (retval != data_len) {
-		DBG_PRINT("fred_sys: unable to reach client. Error: %s\n", strerror(errno));
+		ERROR_PRINT("fred_sys: unable to reach client. Error: %s\n", strerror(errno));
 		return 1;
 	}
 
@@ -187,13 +187,13 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 			arg = fred_msg_get_arg(msg);
 			hw_task = sys_layout_get_hw_task(self->sys, arg);
 			if (!hw_task) {
-				DBG_PRINT("fred_sys: unable to find hw-task id: %u\n", arg);
+				ERROR_PRINT("fred_sys: unable to find hw-task id: %u\n", arg);
 				retval = send_fred_message_(self->conn_sock, FRED_MSG_ERROR, 0);
 				break;
 
 			} else {
 				if (self->hw_tasks_count >= MAX_HW_TASKS - 1) {
-					DBG_PRINT("fred_sys: critical: maximum number of hw-tasks"
+					ERROR_PRINT("fred_sys: critical: maximum number of hw-tasks"
 								" exceeded: detaching client\n");
 					retval = send_fred_message_(self->conn_sock, FRED_MSG_ERROR, 0);
 					break;
@@ -206,7 +206,7 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 				// Allocate hw-tasks data buffers (pass current index)
 				retval = alloc_data_buff_(self, self->hw_tasks_count);
 				if (retval) {
-					DBG_PRINT("fred_sys: critical: could not allocate data buffer,"
+					ERROR_PRINT("fred_sys: critical: could not allocate data buffer,"
 								"detaching client\n");
 					break;
 				}
@@ -214,7 +214,7 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 				// Send buffer to the client
 				retval = send_user_data_buffs_(self, self->hw_tasks_count);
 				if (retval) {
-					DBG_PRINT("fred_sys: critical: communication error while"
+					ERROR_PRINT("fred_sys: critical: communication error while"
 								"binding data buffers: detaching client\n");
 					break;
 				}
@@ -271,7 +271,7 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 
 	// Critical error, notify all clients and shutdown the server
 	} else if (retval < 0) {
-		DBG_PRINT("fred_sys: critical error while processing client request\n");
+		ERROR_PRINT("fred_sys: critical error while processing client request\n");
 		return -1;
 
 	} else {
@@ -332,7 +332,7 @@ int handle_event_(void *self)
 	cp = (struct sw_task_client *)self;
 	nread = read(cp->conn_sock, &msg, sizeof(msg));
 	if (nread < 0) {
-		DBG_PRINT("fred_sys: error reading client message from socket: %s\n",
+		ERROR_PRINT("fred_sys: error reading client message from socket: %s\n",
 					strerror(errno));
 		return -1;
 
@@ -373,7 +373,7 @@ int sw_task_client_init(struct sw_task_client **self, int list_sock, struct sys_
 	// to the reactor by the server
 	(*self)->conn_sock = accept(list_sock, (struct sockaddr *)&cli_addr, &cli_addr_len);
 	if ((*self)->conn_sock < 0) {
-		DBG_PRINT("fred_sys: error on connect: %s\n", strerror(errno));
+		ERROR_PRINT("fred_sys: error on connect: %s\n", strerror(errno));
 		free(*self);
 		return -1;
 	}

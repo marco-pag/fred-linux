@@ -115,7 +115,7 @@ int reactor_add_event_handler(struct reactor *self, struct event_handler *event_
 			// Add to epoll
 			retval = epoll_ctl(self->ep_fd, EPOLL_CTL_ADD, handler_fd, &epoll_event);
 			if (retval < 0) {
-				DBG_PRINT("fred_sys: epoll reactor: epoll_ctl: could not add event!\n");
+				ERROR_PRINT("fred_sys: epoll reactor: epoll_ctl: could not add event!\n");
 				return -1;
 			}
 
@@ -139,7 +139,7 @@ int reactor_event_loop(struct reactor *self)
 		// Wait for events
 		events_count = epoll_wait(self->ep_fd, epoll_events, MAX_EVENTS_SRCS, -1);
 		if (events_count < 0) {
-			DBG_PRINT("fred_sys: epoll reactor: epoll_wait error");
+			ERROR_PRINT("fred_sys: epoll reactor: epoll_wait error");
 			break;
 		}
 
@@ -151,16 +151,16 @@ int reactor_event_loop(struct reactor *self)
 
 			// Check event class
 			if (epoll_events[i].events & EPOLLRDHUP) {
-				DBG_PRINT("fred_sys: EPOLLRDHUP, connection closed\n");
+				ERROR_PRINT("fred_sys: EPOLLRDHUP, connection closed\n");
 				free_event_source_(self, event_src);
 				continue;
 
 			} else if (epoll_events[i].events & EPOLLERR) {
-				DBG_PRINT("fred_sys: epoll reactor: epoll_wait error\n");
+				ERROR_PRINT("fred_sys: epoll reactor: epoll_wait error\n");
 				return -1;
 
 			} else if (!(epoll_events[i].events & EPOLLIN)) {
-				DBG_PRINT("fred_sys: epoll reactor: event is not EPOLLIN, continue...\n");
+				ERROR_PRINT("fred_sys: epoll reactor: event is not EPOLLIN, continue...\n");
 				return -1;
 			}
 
@@ -196,7 +196,7 @@ int reactor_init(struct reactor **self)
 	// Create epoll instance
 	(*self)->ep_fd = epoll_create1(0);
 	if ((*self)->ep_fd < 0) {
-		DBG_PRINT("fred_sys: epoll reactor: epoll_create error\n");
+		ERROR_PRINT("fred_sys: epoll reactor: epoll_create error\n");
 		return -1;
 	}
 

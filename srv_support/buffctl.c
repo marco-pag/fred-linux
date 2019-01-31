@@ -44,7 +44,7 @@ int buffctl_open(buffctl_ft **buffctl, const char *dev_name)
 
 	*buffctl = calloc(1, sizeof(**buffctl));
 	if (*buffctl == NULL) {
-		DBG_PRINT("buffctl: could not allocate memory\n");
+		ERROR_PRINT("buffctl: could not allocate memory\n");
 		return -1;
 	}
 
@@ -54,7 +54,7 @@ int buffctl_open(buffctl_ft **buffctl, const char *dev_name)
 
 	(*buffctl)->fd = open((*buffctl)->dev_name, O_RDWR);
 	if ((*buffctl)->fd < 0) {
-		DBG_PRINT("buffctl: failed to open %s \n", (*buffctl)->dev_name);
+		ERROR_PRINT("buffctl: failed to open %s \n", (*buffctl)->dev_name);
 		free((*buffctl));
 		return -1;
 	}
@@ -79,7 +79,7 @@ int buffctl_alloc_buff(buffctl_ft *buffctl, struct fred_buff_if **buff_if, size_
 
 	*buff_if = calloc(1, sizeof(**buff_if));
 	if (*buff_if == NULL) {
-		DBG_PRINT("buffctl: could not allocate memory\n");
+		ERROR_PRINT("buffctl: could not allocate memory\n");
 		return -1;
 	}
 
@@ -89,7 +89,7 @@ int buffctl_alloc_buff(buffctl_ft *buffctl, struct fred_buff_if **buff_if, size_
 	// Request a new buffer to the buffctl kernel module
 	retval = ioctl(buffctl->fd, FRED_BUFFCTL_ALLOC, *buff_if);
 	if (retval < 0) {
-		DBG_PRINT("buffctl: kernel module could not allocate a new buff\n");
+		ERROR_PRINT("buffctl: kernel module could not allocate a new buff\n");
 		return -1;
 	}
 
@@ -105,7 +105,7 @@ int buffctl_free_buff(buffctl_ft *buffctl, struct fred_buff_if *buff_if)
 	// Ask the kernel module to free the buffer
 	retval = ioctl(buffctl->fd, FRED_BUFFCTL_FREE, &buff_if->id);
 	if (retval < 0) {
-		DBG_PRINT("buffctl: kernel module failed to free buffer\n");
+		ERROR_PRINT("buffctl: kernel module failed to free buffer\n");
 		retval = -1;
 	} else {
 		retval = 0;

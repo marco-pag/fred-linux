@@ -108,7 +108,7 @@ int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 	// Scan class directory for UIO devices
 	dirs = scandir(sys_class_uio, &namelist, NULL, alphasort);
 	if (dirs < 0){
-		DBG_PRINT("uio_drv: unable to find class for UIO devices");
+		ERROR_PRINT("uio_drv: unable to find class for UIO devices");
 		free(uio_dev);
 		return -1;
 	}
@@ -153,7 +153,7 @@ int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 
 	// Check if the device has been found
 	if (!dev_found) {
-		DBG_PRINT("uio_drv: unable to find UIO device: %s\n", dev_name);
+		ERROR_PRINT("uio_drv: unable to find UIO device: %s\n", dev_name);
 		free(uio_dev);
 		return -1;
 	}
@@ -162,7 +162,7 @@ int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 	sprintf(f_path, "/dev/uio%d", (*uio_dev)->uio_num);
 	(*uio_dev)->uio_fd = open(f_path, O_RDWR);
 	if ((*uio_dev)->uio_fd < 0) {
-		DBG_PRINT("uio_drv: unable to open UIO device: %s\n", dev_name);
+		ERROR_PRINT("uio_drv: unable to open UIO device: %s\n", dev_name);
 		free(uio_dev);
 		return -1;
 	}
@@ -172,7 +172,7 @@ int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 											PROT_READ | PROT_WRITE, MAP_SHARED,
 											(*uio_dev)->uio_fd, 0 * getpagesize());
 	if (!(*uio_dev)->map_base) {
-		DBG_PRINT("uio_drv: unable to mmap UIO device: %s\n", dev_name);
+		ERROR_PRINT("uio_drv: unable to mmap UIO device: %s\n", dev_name);
 		close((*uio_dev)->uio_fd);
 		free(uio_dev);
 		return -2;

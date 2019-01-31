@@ -22,6 +22,17 @@
 
 //---------------------------------------------------------------------------------------------
 
+static const char fred_logo[] =
+"\n"
+"_|_|_|_|  _|_|_|    _|_|_|_|  _|_|_|    \n"
+"_|        _|    _|  _|        _|    _|  \n"
+"_|_|_|    _|_|_|    _|_|_|    _|    _|  \n"
+"_|        _|    _|  _|        _|    _|  \n"
+"_|        _|    _|  _|_|_|_|  _|_|_|    \n"
+"\n";
+
+//---------------------------------------------------------------------------------------------
+
 struct fred_sys {
 	// Epoll event reactor (own)
 	struct reactor *reactor;
@@ -56,45 +67,47 @@ int fred_sys_init(struct fred_sys **self, const char *arch_file,
 	if (!(*self))
 		return -1;
 
+	DBG_PRINT(fred_logo);
+
 	// Initialize logger
 	retval = logger_init();
 	if (retval) {
-		DBG_PRINT("fred_sys: error while initializing logger\n");
+		ERROR_PRINT("fred_sys: error while initializing logger\n");
 		goto error_clean;
 	}
 
 	// Open epoll interface
 	retval = reactor_init(&(*self)->reactor);
 	if (retval) {
-		DBG_PRINT("fred_sys: error while initializing event reactor\n");
+		ERROR_PRINT("fred_sys: error while initializing event reactor\n");
 		goto error_clean;
 	}
 
 	// Open file descriptor based signal handler
 	retval = signals_recv_init(&(*self)->signals_receiver);
 	if (retval) {
-		DBG_PRINT("fred_sys: error while initializing fd for receiving signals\n");
+		ERROR_PRINT("fred_sys: error while initializing fd for receiving signals\n");
 		goto error_clean;
 	}
 
 	// Open kernel module interface file
 	retval = buffctl_open(&(*self)->buffctl, NULL);
 	if (retval) {
-		DBG_PRINT("fred_sys: unable to open buffctl device\n");
+		ERROR_PRINT("fred_sys: unable to open buffctl device\n");
 		goto error_clean;
 	}
 
 	// Open reconfiguration device
 	retval = devcfg_init(&(*self)->devcfg);
 	if (retval) {
-		DBG_PRINT("fred_sys: unable to open devcfg device\n");
+		ERROR_PRINT("fred_sys: unable to open devcfg device\n");
 		goto error_clean;
 	}
 
 	// Initalize scheduler
 	retval = sched_init(&(*self)->scheduler, (*self)->devcfg);
 	if (retval) {
-		DBG_PRINT("fred_sys: error while initializing scheduler\n");
+		ERROR_PRINT("fred_sys: error while initializing scheduler\n");
 		goto error_clean;
 	}
 
@@ -105,7 +118,7 @@ int fred_sys_init(struct fred_sys **self, const char *arch_file,
 	retval = sys_layout_init(&(*self)->layout, arch_file, hw_tasks_file,
 							(*self)->scheduler, (*self)->buffctl);
 	if (retval) {
-		DBG_PRINT("fred_sys: error while initializing system layout\n");
+		ERROR_PRINT("fred_sys: error while initializing system layout\n");
 		goto error_clean;
 	}
 
@@ -116,7 +129,7 @@ int fred_sys_init(struct fred_sys **self, const char *arch_file,
 	retval = sw_tasks_listener_init(&(*self)->sw_tasks_listener, (*self)->layout,
 									(*self)->reactor, (*self)->scheduler, (*self)->buffctl);
 	if (retval) {
-		DBG_PRINT("fred_sys: error while initializing sw-task listener\n");
+		ERROR_PRINT("fred_sys: error while initializing sw-task listener\n");
 		goto error_clean;
 	}
 
@@ -170,7 +183,7 @@ int fred_sys_run(struct fred_sys *self)
 	retval = reactor_add_event_handler(self->reactor,
 									signals_recv_get_event_handler(self->signals_receiver));
 	if (retval) {
-		DBG_PRINT("fred_sys: error while registering signals handler\n");
+		ERROR_PRINT("fred_sys: error while registering signals handler\n");
 		return -1;
 	}
 
@@ -179,14 +192,14 @@ int fred_sys_run(struct fred_sys *self)
 	// (and source) to the reactor
 	retval = reactor_add_event_handler(self->reactor, devcfg_get_event_handler(self->devcfg));
 	if (retval) {
-		DBG_PRINT("fred_sys: error while registering reconfiguration device handler\n");
+		ERROR_PRINT("fred_sys: error while registering reconfiguration device handler\n");
 		return -1;
 	}
 
 	// Register all slots of all partitions
 	retval = sys_layout_register_slots(self->layout, self->reactor);
 	if (retval) {
-		DBG_PRINT("fred_sys: error while registering slots handler\n");
+		ERROR_PRINT("fred_sys: error while registering slots handler\n");
 		return -1;
 	}
 
@@ -194,7 +207,7 @@ int fred_sys_run(struct fred_sys *self)
 	retval = reactor_add_event_handler(self->reactor,
 								sw_tasks_listener_get_event_handler(self->sw_tasks_listener));
 	if (retval) {
-		DBG_PRINT("fred_sys: error while registering sw-task listener handler\n");
+		ERROR_PRINT("fred_sys: error while registering sw-task listener handler\n");
 		return -1;
 	}
 

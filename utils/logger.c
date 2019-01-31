@@ -29,7 +29,7 @@ int logger_init()
 {
 	fred_log.stream = fopen(LOG_FILE, "w");
 	if (!fred_log.stream) {
-		DBG_PRINT("fred_log: error while opening log file");
+		ERROR_PRINT("fred_log: error while opening log file");
 		return -1;
 	}
 

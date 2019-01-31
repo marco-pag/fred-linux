@@ -140,7 +140,7 @@ int sw_tasks_listener_init(struct sw_tasks_listener **self,
 	// Open socket
 	(*self)->list_sock = open_listening_socket_();
 	if ((*self)->list_sock < 0) {
-		DBG_PRINT("fredsys: software tasks listener: unable to open listening socket\n");
+		ERROR_PRINT("fredsys: software tasks listener: unable to open listening socket\n");
 		free(*self);
 		return -1;
 	}

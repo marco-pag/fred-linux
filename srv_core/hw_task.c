@@ -111,7 +111,7 @@ ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_b
 
 	file_p = fopen(file_name, "r");
 	if (!file_p) {
-		DBG_PRINT("fred_sys: could not open bitstream file %s\n", file_name);
+		ERROR_PRINT("fred_sys: could not open bitstream file %s\n", file_name);
 		return -1;
 	}
 
@@ -123,7 +123,7 @@ ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_b
 	// Alloc bistream buffer device
 	retval = buffctl_alloc_buff(buffctl, buff_if, file_size);
 	if (retval) {
-		DBG_PRINT("fred_sys: could not allocate buffer for bitstream %s\n", file_name);
+		ERROR_PRINT("fred_sys: could not allocate buffer for bitstream %s\n", file_name);
 		return -1;
 	}
 
@@ -140,7 +140,7 @@ ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_b
 	fclose(file_p);
 
 	if (b_read != file_size) {
-		DBG_PRINT("fred_sys: size mismatch for bitstream %s\n", file_name);
+		ERROR_PRINT("fred_sys: size mismatch for bitstream %s\n", file_name);
 		return -1;
 	}
 
@@ -206,7 +206,7 @@ int hw_task_init(struct hw_task **self, uint32_t hw_id, const char *name,
 		// Load bitstream
 		xdev_length = load_bit_buffer_dev_(buffctl, bit_path, &((*self)->bits_buffs[i]));
 		if (xdev_length < 0) {
-			DBG_PRINT("fred_sys: error while reading bit file: %s\n", bit_path);
+			ERROR_PRINT("fred_sys: error while reading bit file: %s\n", bit_path);
 			return -1;
 		}
 

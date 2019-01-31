@@ -17,8 +17,12 @@
 
 #include "uio_drv.h"
 
+//---------------------------------------------------------------------------------------------
+
 // Match hardware type
 typedef uint32_t args_t;
+
+//---------------------------------------------------------------------------------------------
 
 #define slot_drv_dev_init(uio_dev, dev_name) \
 		uio_dev_init(uio_dev, dev_name)
@@ -35,6 +39,8 @@ typedef uint32_t args_t;
 #define slot_drv_get_fd(uio_dev) \
 		uio_get_fd(uio_dev)
 
+//---------------------------------------------------------------------------------------------
+
 void slot_drv_enable_irq(uio_dev_ft *uio_dev);
 
 void slot_drv_clear_int(uio_dev_ft *uio_dev);
@@ -44,5 +50,7 @@ uint32_t slot_drv_get_id(const uio_dev_ft *uio_dev);
 int slot_drv_start_compute(uio_dev_ft *uio_dev, const args_t *args, int args_size);
 
 void slot_drv_wait_for_compl(const uio_dev_ft *uio_dev);
+
+//---------------------------------------------------------------------------------------------
 
 #endif /* SLOT_DRV_H_ */

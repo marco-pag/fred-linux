@@ -48,7 +48,7 @@ int devcfg_drv_init(devcfg_drv **devcfg)
 	fd = open(is_part_path, O_RDWR);
 	if (fd < 0) {
 		free(*devcfg);
-		DBG_PRINT("fred_devcfg: failed to open sysfs partial bistream attribute\n");
+		ERROR_PRINT("fred_devcfg: failed to open sysfs partial bistream attribute\n");
 		return -1;
 	}
 
@@ -59,7 +59,7 @@ int devcfg_drv_init(devcfg_drv **devcfg)
 	fd = open(devcfg_path, O_RDWR);
 	if (fd < 0) {
 		free(*devcfg);
-		DBG_PRINT("fred_devcfg: could not open xdevcfg device file\n");
+		ERROR_PRINT("fred_devcfg: could not open xdevcfg device file\n");
 		return -1;
 	}
 
@@ -95,7 +95,7 @@ int devcfg_drv_start_prog(const devcfg_drv *devcfg,
 
 	retval = ioctl(devcfg->xdev_fd, PHY_BIT_TRANSFER, phy_bit);
 	if (retval < 0) {
-		DBG_PRINT("fred_devcfg: phy bitstream transfer fail\n");
+		ERROR_PRINT("fred_devcfg: phy bitstream transfer fail\n");
 		return retval;
 	}
 
@@ -111,7 +111,7 @@ uint32_t devcfg_drv_clear_evt(const devcfg_drv *devcfg)
 
 	retval = read(devcfg->xdev_fd, &rcfg_us, sizeof(rcfg_us));
 	if (retval != sizeof(rcfg_us)) {
-		DBG_PRINT("fred_devcfg: read for clear event error\n");
+		ERROR_PRINT("fred_devcfg: read for clear event error\n");
 		return 0;
 	}
 

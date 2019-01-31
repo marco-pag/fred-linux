@@ -75,7 +75,7 @@ int gpio_probes_init()
 	// Open export file
 	probes.exp_fd = open(str, O_WRONLY);
 	if (probes.exp_fd < 0) {
-		DBG_PRINT("fred_probes: error while opening GPIO export file\n");
+		ERROR_PRINT("fred_probes: error while opening GPIO export file\n");
 		return -1;
 	}
 
@@ -89,7 +89,7 @@ int gpio_probes_init()
 		sprintf(str, "%sgpio%d/direction", GPIO_PATH, probes.pins[p].idx);
 		fd = open(str, O_RDWR);
 		if (fd < 0) {
-			DBG_PRINT("fred_probes: error while opening GPIO direction file\n");
+			ERROR_PRINT("fred_probes: error while opening GPIO direction file\n");
 			return -1;
 		}
 
@@ -101,7 +101,7 @@ int gpio_probes_init()
 		sprintf(str, "%sgpio%d/value", GPIO_PATH, probes.pins[p].idx);
 		fd = open(str, O_RDWR);
 		if (fd < 0) {
-			DBG_PRINT("fred_probes: error while opening GPIO value file\n");
+			ERROR_PRINT("fred_probes: error while opening GPIO value file\n");
 			return -1;
 		}
 

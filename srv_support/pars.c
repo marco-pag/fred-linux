@@ -10,7 +10,7 @@
  * (at your option) any later version.
 */
 
-// TODO: old code: review
+// TODO: old code: replace with a safe parser!
 
 #include <stdio.h>
 #include <string.h>
@@ -90,13 +90,13 @@ static int parse_file_(struct tokens *tokens, const char filename[])
 
 	file_p = fopen(filename, "r");
 	if (!file_p) {
-		DBG_PRINT("pars: error while opening file: %s\n", filename);
+		ERROR_PRINT("pars: error while opening file: %s\n", filename);
 		return -1;
 	}
 
 	while (getline(&line, &line_len, file_p) != -1) {
 		if (tokenize_line_(tokens, line) != 0) {
-			DBG_PRINT("pars: error while parsing file: %s at line: %u\n",
+			ERROR_PRINT("pars: error while parsing file: %s at line: %u\n",
 					filename, tokens->lines_count);
 			retval = -1;
 			break;
@@ -110,19 +110,13 @@ static int parse_file_(struct tokens *tokens, const char filename[])
 	return retval;
 }
 
-static void free_tokens_(struct tokens *tokens, int dbg_print)
+static void free_tokens_(struct tokens *tokens)
 {
 	// For each line
 	for (size_t l = 0; tokens->lines_tokens[l] && l < MAX_LINES; ++l) {
 
-		if (dbg_print)
-			DBG_PRINT("pars: line %i, %u tokens: ", l, tokens->tokens_count[l]);
-
 		// For each token in the line
 		for (size_t t = 0; tokens->lines_tokens[l][t] && t < MAX_TOKENS; ++t) {
-
-			if (dbg_print)
-				DBG_PRINT("%s ", tokens->lines_tokens[l][t]);
 
 			// Free token string
 			free(tokens->lines_tokens[l][t]);
@@ -130,9 +124,6 @@ static void free_tokens_(struct tokens *tokens, int dbg_print)
 
 		// Free the line of token
 		free(tokens->lines_tokens[l]);
-
-		if (dbg_print)
-			DBG_PRINT("\n");
 	}
 }
 
@@ -149,7 +140,7 @@ int pars_tokenize(struct tokens **tokens, const char file_name[])
 	retval = parse_file_(*tokens, file_name);
 
 	if (retval != 0)
-		free_tokens_(*tokens, 1);
+		free_tokens_(*tokens);
 
 	return retval;
 
@@ -161,7 +152,7 @@ void pars_free_tokens(struct tokens *tokens)
 		return;
 
 	// Set zero for debug
-	free_tokens_(tokens, 0);
+	free_tokens_(tokens);
 
 	free(tokens);
 }

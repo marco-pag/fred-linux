@@ -274,7 +274,7 @@ int sched_rcfg_complete(struct scheduler *self, struct accel_req *request_done)
 #ifdef RCFG_CHECK
 	// Check if the right hw-task has been reconfigured
 	if (!slot_check_hw_task_consistency(slot)) {
-		DBG_PRINT("\tfred_sys: critical error: mismatch on slot %d"
+		ERROR_PRINT("\tfred_sys: critical error: mismatch on slot %d"
 					" of partition %s for hw-task %s\n",
 					slot_get_index(slot),
 					partition_get_name(hw_task_get_partition(

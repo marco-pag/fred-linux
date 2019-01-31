@@ -48,7 +48,7 @@ int handle_event_(void *self)
 	// Receive signal by reading
 	retval = read(recv->fd, &fdsi, sizeof(struct signalfd_siginfo));
 	if (retval != sizeof(struct signalfd_siginfo)) {
-		DBG_PRINT("fred_sys: Error while reading for a signal.\n");
+		ERROR_PRINT("fred_sys: Error while reading for a signal.\n");
 		return -1;
 	}
 
@@ -119,14 +119,14 @@ int signals_recv_init(struct signals_recv **self)
     // Block signals form being raised normally
     retval = sigprocmask(SIG_BLOCK, &mask, NULL);
     if (retval) {
-    	DBG_PRINT("fred_sys: unable to mask signals. Error: %s\n", strerror(errno));
+    	ERROR_PRINT("fred_sys: unable to mask signals. Error: %s\n", strerror(errno));
     	free(*self);
     	return -1;
     }
 
 	(*self)->fd = signalfd(-1, &mask, SFD_NONBLOCK);
 	if ((*self)->fd < 0) {
-    	DBG_PRINT("fred_sys: unable create signals fd. Error: %s\n", strerror(errno));
+    	ERROR_PRINT("fred_sys: unable create signals fd. Error: %s\n", strerror(errno));
     	free(*self);
     	return -1;
 	}

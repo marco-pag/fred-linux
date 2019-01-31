@@ -33,7 +33,7 @@ int sched_mode_set_fp(int priority)
 	assert(param.sched_priority <= priority_max);
 
 	if (sched_setscheduler(0, SCHED_POLICY, &param)) {
-		DBG_PRINT("Error while setting scheduler: %s\n", strerror(errno));
+		ERROR_PRINT("Error while setting scheduler: %s\n", strerror(errno));
 		return -1;
 	}
 

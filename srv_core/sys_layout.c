@@ -70,7 +70,7 @@ int build_partitions_(struct sys_layout *self, const char *arch_file,
 	// Partition file contatins contains one line per partition
 	self->partitions_count = pars_get_num_lines(tokens);
 	if (self->partitions_count >= MAX_PARTITIONS) {
-		DBG_PRINT("fred_sys: maximum number of partitions exceeded\n");
+		ERROR_PRINT("fred_sys: maximum number of partitions exceeded\n");
 		pars_free_tokens(tokens);
 		return -1;
 	}
@@ -85,7 +85,7 @@ int build_partitions_(struct sys_layout *self, const char *arch_file,
 		// Initialize partition
 		retval = partition_init(&self->partitions[p], part_name, p);
 		if (retval < 0) {
-			DBG_PRINT("fred_sys: error: unable to initialize partition %s\n", part_name);
+			ERROR_PRINT("fred_sys: error: unable to initialize partition %s\n", part_name);
 			pars_free_tokens(tokens);
 			return -1;
 		}
@@ -100,7 +100,8 @@ int build_partitions_(struct sys_layout *self, const char *arch_file,
 			// Create a new slot
 			retval = slot_init(&slot, s, dev_name, dec_name, sched);
 			if (retval < 0) {
-				DBG_PRINT("fred_sys: error: unable to initialize slot %u of partition %s\n", s, part_name);
+				ERROR_PRINT("fred_sys: error: unable to initialize slot %u of "
+							"partition %s\n", s, part_name);
 				pars_free_tokens(tokens);
 				return -1;
 			}
@@ -140,7 +141,7 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 	// One line for each hw-task
 	self->hw_tasks_count = pars_get_num_lines(tokens);
 	if (self->hw_tasks_count >= MAX_HW_TASKS) {
-		DBG_PRINT("fred_sys: maximum number of hw-task exceeded\n");
+		ERROR_PRINT("fred_sys: maximum number of hw-task exceeded\n");
 		pars_free_tokens(tokens);
 		return -1;
 	}
@@ -167,7 +168,7 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 
 		// If no partition has been found
 		if (!partition) {
-			DBG_PRINT("fred_sys: error: partition not found for HW-task %s\n", hw_task_name);
+			ERROR_PRINT("fred_sys: error: partition not found for HW-task %s\n", hw_task_name);
 			pars_free_tokens(tokens);
 			return -1;
 		}
@@ -176,7 +177,7 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 		retval = hw_task_init(&self->hw_tasks[i], hw_task_id,
 								hw_task_name, bits_path, partition, self->buffctl);
 		if (retval) {
-			DBG_PRINT("fred_sys: error: unable to initialize HW-task %s\n", hw_task_name);
+			ERROR_PRINT("fred_sys: error: unable to initialize HW-task %s\n", hw_task_name);
 			pars_free_tokens(tokens);
 			return -1;
 		}
@@ -266,13 +267,13 @@ int sys_layout_init(struct sys_layout **self, const char *arch_file,
 
 	retval = build_partitions_(*self, arch_file, sched);
 	if (retval) {
-		DBG_PRINT("fred_sys: error while building partitions\n");
+		ERROR_PRINT("fred_sys: error while building partitions\n");
 		goto error_clean;
 	}
 
 	retval = build_hw_tasks_(*self, hw_tasks_file);
 	if (retval) {
-		DBG_PRINT("fred_sys: error while building HW-tasks\n");
+		ERROR_PRINT("fred_sys: error while building HW-tasks\n");
 		goto error_clean;
 	}
 

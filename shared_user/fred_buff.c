@@ -39,7 +39,7 @@ void* fred_buff_map(struct fred_user_buff *buff)
 
 	buff->file_d = open(buff->dev_name, O_RDWR);
 	if (buff->file_d < 1) {
-		DBG_PRINT("buff: unable to open fred buffer file descriptor: %s\n", buff->dev_name);
+		ERROR_PRINT("buff: unable to open fred buffer file descriptor: %s\n", buff->dev_name);
 		return NULL;
 	}
 
@@ -51,7 +51,7 @@ void* fred_buff_map(struct fred_user_buff *buff)
 	/* Map the whole buffer into the process user space */
 	buff->map_addr = mmap(NULL, buff->length, PROT_READ | PROT_WRITE, MAP_SHARED, buff->file_d, 0);
 	if (buff->map_addr == MAP_FAILED) {
-		DBG_PRINT("buff: failed to mmap buffer\n");
+		ERROR_PRINT("buff: failed to mmap buffer\n");
 		return NULL;
 	}
 
@@ -71,7 +71,7 @@ void fred_buff_unmap(struct fred_user_buff *buff)
 	}
 
 	if (munmap(buff->map_addr, buff->length)) {
-		DBG_PRINT("buff: could not unmap buff: %p, length:%u \n", buff->map_addr, buff->length);
+		ERROR_PRINT("buff: could not unmap buff: %p, length:%u \n", buff->map_addr, buff->length);
 		return;
 	}
 

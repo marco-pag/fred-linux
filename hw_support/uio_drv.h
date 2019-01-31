@@ -15,7 +15,11 @@
 
 #include <stdint.h>
 
+//---------------------------------------------------------------------------------------------
+
 typedef struct uio_dev_ uio_dev_ft;
+
+//---------------------------------------------------------------------------------------------
 
 int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name);
 
@@ -28,5 +32,7 @@ uintptr_t uio_get_base_addr(const uio_dev_ft *uio_dev);
 int uio_read_for_irq(uio_dev_ft *uio_dev);
 
 void uio_clear_gic(uio_dev_ft *uio_dev);
+
+//---------------------------------------------------------------------------------------------
 
 #endif /* UIO_DRV_H_ */

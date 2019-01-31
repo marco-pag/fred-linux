@@ -16,8 +16,9 @@
 #include "slot_drv.h"
 #include "../utils/dbg_print.h"
 
+//---------------------------------------------------------------------------------------------
+
 // Registers offsets from Vivado HLS
-#ifdef FRED_REGMAP_OLD
 #define SLOT_CTRL_BUS_ADDR_AP_CTRL		0x00
 #define SLOT_CTRL_BUS_ADDR_GIE			0x04
 #define SLOT_CTRL_BUS_ADDR_IER			0x08
@@ -26,28 +27,20 @@
 #define SLOT_CTRL_BUS_BITS_ID_DATA		32
 #define SLOT_CTRL_BUS_ADDR_ID_CTRL		0x14
 #define SLOT_CTRL_BUS_ADDR_ARGS_BASE	0x20
+#define SLOT_CTRL_BUS_ADDR_ARGS_HIGH	0x3f
 #define SLOT_CTRL_BUS_WIDTH_ARGS		32
 #define SLOT_CTRL_BUS_DEPTH_ARGS		8
 #define ARGS_OFFSET						1
-#else
-#define SLOT_CTRL_BUS_ADDR_AP_CTRL		0x00
-#define SLOT_CTRL_BUS_ADDR_GIE			0x04
-#define SLOT_CTRL_BUS_ADDR_IER			0x08
-#define SLOT_CTRL_BUS_ADDR_ISR			0x0c
-#define SLOT_CTRL_BUS_ADDR_ID_DATA		0x10
-#define SLOT_CTRL_BUS_BITS_ID_DATA		32
-#define SLOT_CTRL_BUS_ADDR_ID_CTRL		0x14
-#define SLOT_CTRL_BUS_ADDR_ARGS_BASE	0x18
-#define SLOT_CTRL_BUS_WIDTH_ARGS		32
-#define SLOT_CTRL_BUS_DEPTH_ARGS		8
-#define ARGS_OFFSET						2
-#endif
+
+//---------------------------------------------------------------------------------------------
 
 #define REG_WRITE(BaseAddress, RegOffset, Data) \
     *(volatile unsigned int *)((BaseAddress) + (RegOffset)) = (unsigned int)(Data)
 
 #define REG_READ(BaseAddress, RegOffset) \
     *(volatile unsigned int *)((BaseAddress) + (RegOffset))
+
+//---------------------------------------------------------------------------------------------
 
 void slot_drv_enable_irq(uio_dev_ft *uio_dev)
 {
@@ -109,7 +102,7 @@ int slot_drv_start_compute(uio_dev_ft *uio_dev, const args_t *args, int args_siz
 	// Check if the module is ready
 	reg = REG_READ(base_addr, SLOT_CTRL_BUS_ADDR_AP_CTRL);
 	if (reg & 0x1) {
-		DBG_PRINT("slot_drv: error: hw accelerator is not ready!\n");
+		ERROR_PRINT("slot_drv: error: hw accelerator is not ready!\n");
 		return -1;
 	}
 
