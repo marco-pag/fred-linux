@@ -88,7 +88,7 @@ int slot_drv_start_compute(uio_dev_ft *uio_dev, const args_t *args, int args_siz
 	uint32_t base_addr;
 
 	assert(uio_dev);
-	assert(args_size < SLOT_CTRL_BUS_DEPTH_ARGS);
+	assert(args_size <= SLOT_CTRL_BUS_DEPTH_ARGS);
 
 	base_addr = uio_get_base_addr(uio_dev);
 
