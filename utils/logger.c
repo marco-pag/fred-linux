@@ -21,18 +21,23 @@
 
 //---------------------------------------------------------------------------------------------
 
+// define the logger
 logger fred_log;
 
 //---------------------------------------------------------------------------------------------
 
 int logger_init()
 {
+	struct timespec ts_now;
+
 	fred_log.stream = fopen(LOG_FILE, "w");
 	if (!fred_log.stream) {
 		ERROR_PRINT("fred_log: error while opening log file");
 		return -1;
 	}
 
+	clock_gettime(CLOCK_MONOTONIC, &ts_now);
+	fred_log.t_begin = ts_now.tv_sec * 1000000 + ts_now.tv_nsec / 1000;
 	fred_log.state = LOG_OPEN;
 
 	return 0;

@@ -14,6 +14,8 @@
 #define LOGGER_H_
 
 #include <stdio.h>
+#include <stdint.h>
+#include <time.h>
 
 #define LOG_LEV_MUTE		0
 #define LOG_LEV_SIMPLE		1
@@ -28,10 +30,15 @@
 
 //---------------------------------------------------------------------------------------------
 
-#define logger_log(level, ...) \
+#define logger_log(level, format, ...) \
 do {  \
-	if (level <= LOG_GLOBAL_LEVEL) { \
-		fprintf(fred_log.stream, __VA_ARGS__); \
+	if (fred_log.state == LOG_OPEN && level <= LOG_GLOBAL_LEVEL) { \
+		struct timespec log_ts_now; \
+		uint64_t log_tstamp; \
+		clock_gettime(CLOCK_MONOTONIC, &log_ts_now); \
+		log_tstamp = (log_ts_now.tv_sec * 1000000 + log_ts_now.tv_nsec / 1000) \
+						- fred_log.t_begin; \
+		fprintf(fred_log.stream, "%020llu: "format"\n", log_tstamp, ##__VA_ARGS__); \
 		fflush(fred_log.stream); \
 	} \
 } while (0)
@@ -39,10 +46,12 @@ do {  \
 //---------------------------------------------------------------------------------------------
 
 typedef struct logger_ {
+	enum {LOG_CLOSE = 0, LOG_OPEN = 1} state;
 	FILE *stream;
-	enum {LOG_CLOSE, LOG_OPEN} state;
+	uint64_t t_begin;
 } logger;
 
+// declare the logger
 extern logger fred_log;
 
 //---------------------------------------------------------------------------------------------

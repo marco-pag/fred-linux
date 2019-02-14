@@ -50,7 +50,7 @@ int start_slot_after_rcfg_(struct scheduler *self, struct accel_req *request_don
 		return -1;
 
 	logger_log(LOG_LEV_FULL,"\tfred_sys: slot: %d of partition: %s"
-							" started for hw-task: %s\n",
+							" started for hw-task: %s",
 							slot_get_index(slot),
 							partition_get_name(hw_task_get_partition(
 								accel_req_get_hw_task(request_done))),
@@ -65,7 +65,7 @@ int start_slot_after_rcfg_(struct scheduler *self, struct accel_req *request_don
 		// Remove the head request from the FRI queue
 		TAILQ_REMOVE(&self->fri_queue_head, next_request, queue_elem);
 
-		logger_log(LOG_LEV_PEDANTIC,"\tfred_sys: FRI queue not empty\n");
+		logger_log(LOG_LEV_PEDANTIC,"\tfred_sys: FRI queue not empty");
 
 		// Start reconfiguration
 		retval = start_rcfg_(self, next_request);
@@ -85,7 +85,7 @@ int start_rcfg_(struct scheduler *self, struct accel_req *request)
 	// If the slot already contains the hw-task
 	if (accel_req_get_skip_rcfg(request)) {
 		logger_log(LOG_LEV_FULL,"\tfred_sys: skipping rcfg of slot: %d"
-								" of partition: %s for hw-task: %s\n",
+								" of partition: %s for hw-task: %s",
 								slot_get_index(accel_req_get_slot(request)),
 								partition_get_name(hw_task_get_partition(
 										accel_req_get_hw_task(request))),
@@ -96,7 +96,7 @@ int start_rcfg_(struct scheduler *self, struct accel_req *request)
 
 	} else {
 		logger_log(LOG_LEV_FULL,"\tfred_sys: start rcfg of slot:"
-								"%d of partition: %s for hw-task: %s\n",
+								"%d of partition: %s for hw-task: %s",
 								slot_get_index(accel_req_get_slot(request)),
 								partition_get_name(hw_task_get_partition(
 										accel_req_get_hw_task(request))),
@@ -146,7 +146,7 @@ int push_req_fri_queue_(struct scheduler *self, struct accel_req *request)
 	if (devcfg_is_idle(self->devcfg) &&
 		TAILQ_FIRST(&self->fri_queue_head) == request) {
 
-		logger_log(LOG_LEV_PEDANTIC,"\tfred_sys: DevCfg idle & request on top\n");
+		logger_log(LOG_LEV_PEDANTIC,"\tfred_sys: DevCfg idle & request on top");
 
 		// Remove the head request from the FRI queue
 		TAILQ_REMOVE(&self->fri_queue_head, request, queue_elem);
@@ -210,7 +210,7 @@ int sched_push_accel_req(struct scheduler *self, struct accel_req *request)
 	// If all slots in the partition are occupied
 	if (!slot) {
 		logger_log(LOG_LEV_FULL,"\tfred_sys: all slots are busy for hw-task %s"
-								", insert into partition %s queue\n",
+								", insert into partition %s queue",
 								hw_task_get_name(hw_task),
 								partition_get_name(partition));
 
@@ -231,7 +231,7 @@ int sched_push_accel_req(struct scheduler *self, struct accel_req *request)
 			accel_req_set_skip_rcfg(request);
 
 		logger_log(LOG_LEV_FULL,"\tfred_sys: hw-task: %s got slot: %d of"
-								" its partition: %s, inserted in fri queue\n",
+								" its partition: %s, inserted in fri queue",
 								hw_task_get_name(hw_task),
 								slot_get_index(slot),
 								partition_get_name(partition));
@@ -261,7 +261,7 @@ int sched_rcfg_complete(struct scheduler *self, struct accel_req *request_done)
 	rcfg_time_us = devcfg_clear_evt(self->devcfg);
 
 	logger_log(LOG_LEV_FULL,"\tfred_sys: event: devcfg, slot: %d of partition: %s"
-							" rcfg completed for hw-task: %s in %u us\n",
+							" rcfg completed for hw-task: %s in %u us",
 							slot_get_index(slot),
 							partition_get_name(hw_task_get_partition(
 								accel_req_get_hw_task(request_done))),
@@ -275,7 +275,7 @@ int sched_rcfg_complete(struct scheduler *self, struct accel_req *request_done)
 	// Check if the right hw-task has been reconfigured
 	if (!slot_check_hw_task_consistency(slot)) {
 		ERROR_PRINT("\tfred_sys: critical error: mismatch on slot %d"
-					" of partition %s for hw-task %s\n",
+					" of partition %s for hw-task %s",
 					slot_get_index(slot),
 					partition_get_name(hw_task_get_partition(
 						accel_req_get_hw_task(request_done))),
@@ -308,7 +308,7 @@ int sched_slot_complete(struct scheduler *self, struct accel_req *request_done)
 	assert(partition);
 
 	logger_log(LOG_LEV_FULL,"\tfred_sys: slot: %d of partition: %s"
-							" completed execution of hw-task: %s\n",
+							" completed execution of hw-task: %s",
 							slot_get_index(slot), partition_get_name(partition),
 							hw_task_get_name(accel_req_get_hw_task(request_done)));
 
