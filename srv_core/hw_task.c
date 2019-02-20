@@ -42,12 +42,10 @@ size_t mangle_bitstream_(uint8_t *bitstream, size_t length)
 		// Look for sync word
 		for (i = 0; i < length - 4; i++) {
 			if (memcmp(bitstream + i, "\x66\x55\x99\xAA", 4) == 0) {
-				DBG_PRINT("fred_sys: bitstream: found normal sync word\n");
 				endian_swap = 0;
 				break;
 			}
 			if (memcmp(bitstream + i, "\xAA\x99\x55\x66", 4) == 0) {
-				DBG_PRINT("fred_sys: bitstream: found swapped sync word\n");
 				endian_swap = 1;
 				break;
 			}
@@ -56,7 +54,6 @@ size_t mangle_bitstream_(uint8_t *bitstream, size_t length)
 		// Remove the header, aligning the data on word boundary
 		if (i != length - 4) {
 			length -= i;
-			DBG_PRINT("fred_sys: bitstream: removing the header\n");
 			memmove(bitstream, bitstream + i, length);
 		}
 	}
@@ -67,7 +64,7 @@ size_t mangle_bitstream_(uint8_t *bitstream, size_t length)
 			bs_wrd = (uint32_t *)&bitstream[i];
 			*bs_wrd = swab32_(*bs_wrd);
 		}
-		DBG_PRINT("fred_sys: bitstream: endianess fixed\n");
+		DBG_PRINT("fred_sys: bitstream: endianess swapped\n");
 	}
 
 	return length;
@@ -159,7 +156,7 @@ int hw_task_add_buffer(struct hw_task *self, unsigned int buff_size)
 {
 	assert(self);
 
-	DBG_PRINT("fred_sys: setting buffer %u of size %u for HW-task %s\n",
+	DBG_PRINT("fred_sys: creating data buffer %u of size %u for HW-task %s\n",
 				self->data_buffs_count, buff_size, self->name);
 
 	self->data_buffs_sizes[self->data_buffs_count++] = buff_size;

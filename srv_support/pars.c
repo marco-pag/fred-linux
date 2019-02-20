@@ -86,17 +86,17 @@ static int parse_file_(struct tokens *tokens, const char filename[])
 
 	tokens->lines_count = 0;
 
-	DBG_PRINT("pars: parsing file: %s\n", filename);
+	DBG_PRINT("fred_sys: pars: parsing file: %s\n", filename);
 
 	file_p = fopen(filename, "r");
 	if (!file_p) {
-		ERROR_PRINT("pars: error while opening file: %s\n", filename);
+		ERROR_PRINT("fred_sys: pars: error while opening file: %s\n", filename);
 		return -1;
 	}
 
 	while (getline(&line, &line_len, file_p) != -1) {
 		if (tokenize_line_(tokens, line) != 0) {
-			ERROR_PRINT("pars: error while parsing file: %s at line: %u\n",
+			ERROR_PRINT("fred_sys: pars: error while parsing file: %s at line: %u\n",
 					filename, tokens->lines_count);
 			retval = -1;
 			break;

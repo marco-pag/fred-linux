@@ -55,8 +55,6 @@ void* fred_buff_map(struct fred_user_buff *buff)
 		return NULL;
 	}
 
-	DBG_PRINT("buff: buffer mapped at addresses: %p, length:%u \n",
-				buff->map_addr, buff->length);
 
 	return buff->map_addr;
 }
