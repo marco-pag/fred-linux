@@ -187,8 +187,9 @@ void uio_dev_free(uio_dev_ft *uio_dev)
 		return;
 
 	// Unmap from the process memory space
-	if (uio_dev->map_base)
+	if (uio_dev->map_base) {
 		munmap((void *)uio_dev->map_base, uio_dev->regs_size);
+	}
 
 	close(uio_dev->uio_fd);
 
@@ -211,24 +212,33 @@ int uio_get_fd(const uio_dev_ft *uio_dev)
 
 int uio_read_for_irq(uio_dev_ft *uio_dev)
 {
+	int retval;
 	int32_t pending;
 
 	assert(uio_dev);
 
 	// block on the file waiting for the interrupt
 	pending = 0;
-	read(uio_dev->uio_fd, &pending, sizeof(pending));
+	retval = read(uio_dev->uio_fd, &pending, sizeof(pending));
+	if (retval < 0) {
+		ERROR_PRINT("uio_drv: error while reading for irq\n");
+		return -1;
+	}
 
 	return pending;
 }
 
 void uio_clear_gic(uio_dev_ft *uio_dev)
 {
+	int retval;
 	static const int32_t reenable = 1;
 
 	assert(uio_dev);
 
 	// re-enable the interrupt in the interrupt controller
 	// thru the UIO subsystem
-	write(uio_dev->uio_fd, &reenable, sizeof(reenable));
+	retval = write(uio_dev->uio_fd, &reenable, sizeof(reenable));
+	if (retval < 0) {
+		ERROR_PRINT("uio_drv: error while clearing gic\n");
+	}
 }

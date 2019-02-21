@@ -39,6 +39,7 @@ struct devcfg_drv_ {
 int devcfg_drv_init(devcfg_drv **devcfg)
 {
 	int fd;
+	int retval;
 
 	*devcfg = calloc(1, sizeof(**devcfg));
 	if (!(*devcfg))
@@ -52,7 +53,12 @@ int devcfg_drv_init(devcfg_drv **devcfg)
 		return -1;
 	}
 
-	write(fd, "1", 2);
+	retval = write(fd, "1", 2);
+	if (retval < 0) {
+		ERROR_PRINT("fred_devcfg: error while setting sysfs attribute for partial bistreams\n");
+		return -1;
+	}
+
 	close(fd);
 
 	// Open xdevcfg device file
@@ -120,10 +126,16 @@ uint32_t devcfg_drv_clear_evt(const devcfg_drv *devcfg)
 
 int devcfg_drv_write_legacy(const devcfg_drv *devcfg, void *bit, size_t bit_len)
 {
+	int retval;
+
 	assert(devcfg);
 
 	// Initiate devcfg DMA transfer
-	write(devcfg->xdev_fd, bit, bit_len);
+	retval = write(devcfg->xdev_fd, bit, bit_len);
+	if (retval < 0) {
+		ERROR_PRINT("fred_devcfg: error write bitstream legacy\n");
+		return -1;
+	}
 
 	return 0;
 }

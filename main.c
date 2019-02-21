@@ -24,20 +24,20 @@ const char *HW_TASKS = "hw_tasks.csv";
 
 int main ()
 {
+	int retval;
 	struct fred_sys *fred_sys;
 
 	sched_mode_set_fp(0);
 
-	printf("Fred test: starting...\n");
-
-	fred_sys_init(&fred_sys, ARCH_FILE, HW_TASKS);
+	retval = fred_sys_init(&fred_sys, ARCH_FILE, HW_TASKS);
+	if (retval < 0) {
+		return -1;
+	}
 
 	// Event loop
 	fred_sys_run(fred_sys);
 
 	fred_sys_free(fred_sys);
-
-	printf("Fred test: end\n");
 
 	return 0;
 }

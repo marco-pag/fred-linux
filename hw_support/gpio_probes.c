@@ -68,6 +68,7 @@ int gpio_probes_init()
 {
 	char str[1024];
 	int fd;
+	int retval;
 
 	strcpy(str, GPIO_PATH);
 	strcat(str, "export");
@@ -83,7 +84,11 @@ int gpio_probes_init()
 
 		// Enable pin
 		sprintf(str, "%d", probes.pins[p].idx);
-		write(probes.exp_fd, str, 4);
+		retval = write(probes.exp_fd, str, 4);
+		if (retval < 0) {
+			ERROR_PRINT("fred_probes: error while enabling pin\n");
+			return -1;
+		}
 
 		// Open direction file
 		sprintf(str, "%sgpio%d/direction", GPIO_PATH, probes.pins[p].idx);
@@ -94,7 +99,12 @@ int gpio_probes_init()
 		}
 
 		// Set for output
-		write(fd, "out", 4);
+		retval = write(fd, "out", 4);
+		if (retval < 0) {
+			ERROR_PRINT("fred_probes: error while setting GPIO pin for output\n");
+			return -1;
+		}
+
 		close(fd);
 
 		// Open value file
@@ -106,7 +116,12 @@ int gpio_probes_init()
 		}
 
 		// Set zero and keep fd open
-		write(fd, "0", 2);
+		retval = write(fd, "0", 2);
+		if (retval < 0) {
+			ERROR_PRINT("fred_probes: error while setting GPIO pin to zero\n");
+			return -1;
+		}
+
 		probes.pins[p].fd = fd;
 	}
 
@@ -123,21 +138,30 @@ void gpio_probes_free()
 void gpio_probes_set_pin(size_t pin_ixd)
 {
 #ifdef GPIO_PRB_ENABLED
+	int retval;
 
 	if (pin_ixd >= PINS_LEN)
 		return;
 
-	write(probes.pins[pin_ixd].fd, "1", 2);
+	retval = write(probes.pins[pin_ixd].fd, "1", 2);
+	if (retval < 0) {
+		ERROR_PRINT("fred_probes: error while setting GPIO pin\n");
+	}
 #endif
 }
 
 void gpio_probes_clear_pin(size_t pin_ixd)
 {
 #ifdef GPIO_PRB_ENABLED
+	int retval;
+
 	if (pin_ixd >= PINS_LEN)
 		return;
 
-	write(probes.pins[pin_ixd].fd, "0", 2);
+	retval = write(probes.pins[pin_ixd].fd, "0", 2);
+	if (retval < 0) {
+		ERROR_PRINT("fred_probes: error while clearing GPIO pin\n");
+	}
 #endif
 }
 
