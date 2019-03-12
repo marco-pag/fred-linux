@@ -10,34 +10,31 @@
  * (at your option) any later version.
 */
 
-#include <stdio.h>
+#ifndef USER_BUFF_H_
+#define USER_BUFF_H_
 
-#include "srv_core/fred_sys.h"
-#include "utils/sched_mode.h"
-
-//---------------------------------------------------------------------------------------------
-
-const char *ARCH_FILE = "arch.csv";
-const char *HW_TASKS = "hw_tasks.csv";
+#include <stddef.h>
+#include "../parameters.h"
 
 //---------------------------------------------------------------------------------------------
 
-int main ()
-{
-	int retval;
-	struct fred_sys *fred_sys;
+struct user_buff {
+	void *map_addr;
+	int file_d;
+	size_t length;
+	char dev_name[MAX_PATH];
+};
 
-	sched_mode_set_fp(0);
+//---------------------------------------------------------------------------------------------
 
-	retval = fred_sys_init(&fred_sys, ARCH_FILE, HW_TASKS);
-	if (retval < 0)
-		return -1;
+void user_buff_init(struct user_buff *buff);
 
-	// Event loop
-	fred_sys_run(fred_sys);
+void *user_buff_map(struct user_buff *buff);
 
-	fred_sys_free(fred_sys);
+void user_buff_unmap(struct user_buff *buff);
 
-	return 0;
-}
+size_t user_buff_get_size(const struct user_buff *buff);
 
+//---------------------------------------------------------------------------------------------
+
+#endif /* USER_H_ */

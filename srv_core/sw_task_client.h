@@ -18,7 +18,6 @@
 #include "sys_layout.h"
 #include "scheduler.h"
 #include "hw_task.h"
-#include "../shared_user/fred_buff.h"
 #include "../srv_support/buffctl.h"
 
 //---------------------------------------------------------------------------------------------

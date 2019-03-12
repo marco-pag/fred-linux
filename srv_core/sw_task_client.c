@@ -25,6 +25,7 @@
 
 #include "sw_task_client.h"
 #include "../shared_user/fred_msg.h"
+#include "../shared_user/user_buff.h"
 #include "../utils/dbg_print.h"
 
 //---------------------------------------------------------------------------------------------
@@ -122,7 +123,7 @@ int send_user_data_buffs_(struct sw_task_client *self, int task_idx)
 	char usr_dev_name[MAX_PATH];
 
 	// User buffer representations (one at time)
-	struct fred_user_buff user_buffs[MAX_DATA_BUFFS];
+	struct user_buff user_buffs[MAX_DATA_BUFFS];
 
 	// Get hw-task properties
 	data_buffs_count = hw_task_get_data_buffs_count(self->hw_tasks[task_idx]);

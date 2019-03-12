@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 #include "hw_task.h"
-#include "../shared_user/fred_buff.h"
+#include "../shared_user/user_buff.h"
 #include "../utils/dbg_print.h"
 
 //---------------------------------------------------------------------------------------------
@@ -75,7 +75,7 @@ size_t mangle_bitstream_(uint8_t *bitstream, size_t length)
 // Helper function. Take advantage of the same code for mapping data buffer
 // to map bistream buffer for bitstream loading
 static
-int gen_user_buffs_(struct fred_buff_if *buff_if, struct fred_user_buff *buff_usr)
+int gen_user_buffs_(struct fred_buff_if *buff_if, struct user_buff *buff_usr)
 {
 	char dev_usr_name[MAX_PATH];
 
@@ -100,7 +100,7 @@ ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_b
 	int retval;
 	ssize_t length;
 	void *buff_v;
-	struct fred_user_buff user_buffer;
+	struct user_buff user_buffer;
 
 	unsigned int b_read;
 	unsigned int file_size;
@@ -126,11 +126,11 @@ ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_b
 
 	// Reuse the code for mapping user buffer to fill the buffer
 	// associated with the device file
-	fred_buff_init(&user_buffer);
+	user_buff_init(&user_buffer);
 	gen_user_buffs_(*buff_if, &user_buffer);
 
 	// Map bistream buffer into server process virtual address space
-	buff_v = fred_buff_map(&user_buffer);
+	buff_v = user_buff_map(&user_buffer);
 
 	// Read bitstream
 	b_read = fread(buff_v, 1, file_size, file_p);
@@ -145,7 +145,7 @@ ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_b
 	length = mangle_bitstream_(buff_v, file_size);
 
 	// Unmap bistream buffer from server process virtual address space
-	fred_buff_unmap(&user_buffer);
+	user_buff_unmap(&user_buffer);
 
 	return length;
 }

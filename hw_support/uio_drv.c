@@ -10,6 +10,8 @@
  * (at your option) any later version.
 */
 
+// TODO: review old code
+
 // for alphasort
 #define _GNU_SOURCE
 
@@ -31,6 +33,8 @@
 #include "../parameters.h"
 #include "../utils/dbg_print.h"
 
+//---------------------------------------------------------------------------------------------
+
 // Simple -single map- UIO device
 struct uio_dev_ {
 	// Device tree name and UIO number
@@ -47,6 +51,8 @@ struct uio_dev_ {
 	// Base address when mapped into process space
 	uintptr_t map_base;
 };
+
+//---------------------------------------------------------------------------------------------
 
 // TODO: add some range checks
 static inline
@@ -88,6 +94,7 @@ int read_line_(char *f_name, char *linebuf)
 	return 0;
 }
 
+//---------------------------------------------------------------------------------------------
 
 int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 {
@@ -107,14 +114,14 @@ int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 
 	// Scan class directory for UIO devices
 	dirs = scandir(sys_class_uio, &namelist, NULL, alphasort);
-	if (dirs < 0){
+	if (dirs < 0) {
 		ERROR_PRINT("uio_drv: unable to find class for UIO devices");
-		free(uio_dev);
+		free(*uio_dev);
 		return -1;
 	}
 
 	// For each device entry in the /sys/class/uio/ dir
-	for (size_t i = 0;  i < dirs; ++i) {
+	for (int i = 0;  i < dirs; ++i) {
 
 		// Build name file path
 		sprintf(f_path, "%s/%s/name", sys_class_uio, namelist[i]->d_name);
@@ -146,7 +153,7 @@ int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 	}
 
 	// Free namelist
-	for (size_t i = 0;  i < dirs; ++i) {
+	for (int i = 0;  i < dirs; ++i) {
 		free(namelist[i]);
 	}
 	free(namelist);
@@ -154,7 +161,7 @@ int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 	// Check if the device has been found
 	if (!dev_found) {
 		ERROR_PRINT("uio_drv: unable to find UIO device: %s\n", dev_name);
-		free(uio_dev);
+		free(*uio_dev);
 		return -1;
 	}
 
@@ -163,7 +170,7 @@ int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 	(*uio_dev)->uio_fd = open(f_path, O_RDWR);
 	if ((*uio_dev)->uio_fd < 0) {
 		ERROR_PRINT("uio_drv: unable to open UIO device: %s\n", dev_name);
-		free(uio_dev);
+		free(*uio_dev);
 		return -1;
 	}
 
@@ -174,7 +181,7 @@ int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 	if (!(*uio_dev)->map_base) {
 		ERROR_PRINT("uio_drv: unable to mmap UIO device: %s\n", dev_name);
 		close((*uio_dev)->uio_fd);
-		free(uio_dev);
+		free(*uio_dev);
 		return -2;
 	}
 
