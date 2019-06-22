@@ -10,12 +10,13 @@
  * (at your option) any later version.
 */
 
-#ifndef USE_POLL
+#ifdef USE_POLL
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <sys/epoll.h>
+#include <stropts.h>
+#include <poll.h>
 #include <unistd.h>
 #include <assert.h>
 #include <string.h>
@@ -27,7 +28,7 @@
 
 //---------------------------------------------------------------------------------------------
 
-// Epoll implementation of the reactor
+// Poll implementation of the reactor
 
 //---------------------------------------------------------------------------------------------
 
@@ -40,44 +41,57 @@ struct event_source_ {
 //---------------------------------------------------------------------------------------------
 
 struct reactor {
-	// Epoll file descriptor
-	int ep_fd;
+	// Active handlers count
+	int events_count;
 
 	// Events handlers repository
 	struct event_source_ events_sources[MAX_EVENTS_SRCS];
+
+	// pollfd array for poll
+	struct pollfd events_fds[MAX_EVENTS_SRCS];
 };
 
 //--- Private methods -------------------------------------------------------------------------
 
+// This is supposed to happens only in case of *faults* when a client crashes
 static
-void free_event_source_(struct reactor *self, struct event_source_ *event_src)
+void free_event_source_(struct reactor *self, int i)
 {
 	char handler_name[MAX_NAMES];
-
-	// Remove from epoll
-	epoll_ctl(self->ep_fd, EPOLL_CTL_DEL,
-				event_src->handler->get_fd_handle(event_src->handler), NULL);
 
 	// Get handler name for print
 	event_src->handler->get_name(event_src->handler, handler_name, MAX_NAMES);
 
-	DBG_PRINT("fred_sys: epoll reactor: removing event handler %s on file %d\n",
+	DBG_PRINT("fred_sys: poll reactor: removing event handler %s on file %d\n",
 				handler_name, event_src->handler->get_fd_handle(event_src->handler));
 
 	// Free the event handler object
 	event_src->handler->free(event_src->handler);
 
-	// Clear repository flag
+	// Remove event source and compact arrays
+	memmove(&self->events_sources[i],
+			&self->events_sources[i + 1],
+			(self->events_count - 1 - i) * sizeof(self->events_sources[0]));
+
+	memmove(&self->events_fds[i],
+			&self->events_fds[i + 1],
+			(self->events_count - 1 - i) * sizeof(self->events_fds[0]));
+
+	self->events_count--;
+
 	event_src->handler = NULL;
 	event_src->active = 0;
 }
 
+// Called during shutdown
 static
 void free_all_events_source_(struct reactor *self)
 {
+	char handler_name[MAX_NAMES];
+
 	for (int i = 0; i < MAX_EVENTS_SRCS; ++i) {
 		if (self->events_sources[i].active) {
-			free_event_source_(self, &self->events_sources[i]);
+			free_event_source_(self, i);
 		}
 	}
 }
@@ -86,12 +100,8 @@ void free_all_events_source_(struct reactor *self)
 
 int reactor_add_event_handler(struct reactor *self, struct event_handler *event_handler)
 {
-	int retval;
 	int handler_fd = 0;
 	char handler_name[MAX_NAMES];
-
-	// For epoll
-	struct epoll_event epoll_event;
 
 	assert(self);
 	assert(event_handler);
@@ -104,23 +114,18 @@ int reactor_add_event_handler(struct reactor *self, struct event_handler *event_
 			self->events_sources[i].handler = event_handler;
 			self->events_sources[i].active = 1;
 
-			// Fill the epoll event structure and link the event handler wrapper
-			epoll_event.events = EPOLLIN;
-			epoll_event.data.ptr = &self->events_sources[i];
-
 			// Get handler name and file descriptor
 			event_handler->get_name(event_handler, handler_name, MAX_NAMES);
 			handler_fd = event_handler->get_fd_handle(event_handler);
 
-			DBG_PRINT("fred_sys: epoll reactor: adding event handler: %s\n",
-						handler_name);
+			// Set pollfd struct
+			self->events_fds[i].fd = handler_fd;
+			self->events_fds[i].events = POLLIN;
 
-			// Add to epoll
-			retval = epoll_ctl(self->ep_fd, EPOLL_CTL_ADD, handler_fd, &epoll_event);
-			if (retval < 0) {
-				ERROR_PRINT("fred_sys: epoll reactor: epoll_ctl: could not add event!\n");
-				return -1;
-			}
+			self->events_count++;
+
+			DBG_PRINT("fred_sys: poll reactor: adding event handler: %s\n",
+						handler_name);
 
 			return 0;
 		}
@@ -132,64 +137,29 @@ int reactor_add_event_handler(struct reactor *self, struct event_handler *event_
 void reactor_event_loop(struct reactor *self)
 {
 	int retval;
-	struct event_source_ *event_src;
-
-	// For epoll
-	struct epoll_event epoll_events[MAX_EVENTS_SRCS];
-	int events_count;
 
 	while (1) {
-		// Wait for events
-		events_count = epoll_wait(self->ep_fd, epoll_events, MAX_EVENTS_SRCS, -1);
-		if (events_count < 0) {
-			ERROR_PRINT("fred_sys: epoll reactor: epoll_wait error %s\n", strerror(errno));
-			goto exit_clear;
-		}
-
-		// Process active events
-		for (int i = 0; i < events_count; ++i) {
-
-			// Get event handle
-			event_src = (struct event_source_ *)epoll_events[i].data.ptr;
-
-			// Check event class
-			if (epoll_events[i].events & EPOLLRDHUP) {
-				ERROR_PRINT("fred_sys: EPOLLRDHUP, connection closed\n");
-				free_event_source_(self, event_src);
-				continue;
-
-			} else if (epoll_events[i].events & EPOLLERR) {
-				ERROR_PRINT("fred_sys: epoll reactor: epoll_wait error\n");
-				goto exit_clear;
-
-			} else if (!(epoll_events[i].events & EPOLLIN)) {
-				ERROR_PRINT("fred_sys: epoll reactor: event is not EPOLLIN, continue\n");
-				goto exit_clear;
-			}
-
-			assert(event_src);
-
+		retval = poll(&self->events_fds, self->events_count, -1);
+		if (retval < 0) {
+			ERROR_PRINT("fred_sys: poll reactor: poll error %s\n", strerror(errno));
+			return;
+		} else {
 			// Handle event
 			retval = event_src->handler->handle_event(event_src->handler);
 
 			// Single client error -> detach handler
 			if (retval > 0) {
 				free_event_source_(self, event_src);
-				continue;
 
 			// System error -> shutdown
 			} else if (retval < 0) {
-				goto exit_clear;
+				free_all_events_source_(self);
+				ERROR_PRINT("fred_sys: epoll reactor: shutting down event loop");
+				return;
 			}
 		}
 	}
 
-// Still the most straightforward way to exit from nested loops
-// without using cumbersome logic conditions and unnecessary extra variables
-exit_clear:
-	ERROR_PRINT("fred_sys: epoll reactor: shutting down event loop");
-	free_all_events_source_(self);
-	return;
 }
 
 int reactor_init(struct reactor **self)
@@ -198,14 +168,6 @@ int reactor_init(struct reactor **self)
 	*self = calloc(1, sizeof(**self));
 	if (!(*self))
 		return -1;
-
-	// Create epoll instance
-	(*self)->ep_fd = epoll_create1(0);
-	if ((*self)->ep_fd < 0) {
-		ERROR_PRINT("fred_sys: epoll reactor: epoll_create error\n");
-		free(*self);
-		return -1;
-	}
 
 	return 0;
 }
@@ -216,9 +178,8 @@ void reactor_free(struct reactor *self)
 		return;
 
 	free_all_events_source_(self);
-	close(self->ep_fd);
 
 	free(self);
 }
 
-#endif //USE_POLL
+#ifdef //USE_POLL

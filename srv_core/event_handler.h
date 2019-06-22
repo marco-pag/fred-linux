@@ -19,7 +19,7 @@
 
 // handle_event() must return:
 // 0 if event has been proper handled
-// < 0 in case of system error -> reactor must shutdown
+// < 0 in case of system error -> reactor event loop shutdown
 // > 0 in case of single handler error (or remove request) -> reactor must detach handler
 
 // In case of error or disconnection request the reactor relies on the

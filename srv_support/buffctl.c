@@ -55,7 +55,7 @@ int buffctl_open(buffctl_ft **buffctl, const char *dev_name)
 	(*buffctl)->fd = open((*buffctl)->dev_name, O_RDWR);
 	if ((*buffctl)->fd < 0) {
 		ERROR_PRINT("buffctl: failed to open %s \n", (*buffctl)->dev_name);
-		free((*buffctl));
+		free(*buffctl);
 		return -1;
 	}
 

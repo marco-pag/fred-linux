@@ -77,6 +77,7 @@ int devcfg_init(struct devcfg **self)
 
 	retval = devcfg_drv_init(&(*self)->drv);
 	if (retval) {
+		free(*self);
 		return -1;
 	}
 

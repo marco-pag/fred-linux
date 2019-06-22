@@ -27,7 +27,7 @@ void reactor_free(struct reactor *self);
 
 int reactor_add_event_handler(struct reactor *self, struct event_handler *event);
 
-int reactor_event_loop(struct reactor *self);
+void reactor_event_loop(struct reactor *self);
 
 //---------------------------------------------------------------------------------------------
 

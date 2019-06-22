@@ -55,6 +55,7 @@ int devcfg_drv_init(devcfg_drv **devcfg)
 
 	retval = write(fd, "1", 2);
 	if (retval < 0) {
+		free(*devcfg);
 		ERROR_PRINT("fred_devcfg: error while setting sysfs attribute for partial bistreams\n");
 		return -1;
 	}

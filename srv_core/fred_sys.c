@@ -73,42 +73,42 @@ int fred_sys_init(struct fred_sys **self, const char *arch_file,
 	retval = logger_init();
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while initializing logger\n");
-		goto error_clean;
+		goto error_logger;
 	}
 
-	// Open epoll interface
+	// Init event demultiplexer interface
 	retval = reactor_init(&(*self)->reactor);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while initializing event reactor\n");
-		goto error_clean;
+		goto error_reactor;
 	}
 
 	// Open file descriptor based signal handler
 	retval = signals_recv_init(&(*self)->signals_receiver);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while initializing fd for receiving signals\n");
-		goto error_clean;
+		goto error_signals_recv;
 	}
 
 	// Open kernel module interface file
 	retval = buffctl_open(&(*self)->buffctl, NULL);
 	if (retval) {
 		ERROR_PRINT("fred_sys: unable to open buffctl device\n");
-		goto error_clean;
+		goto error_buffctl;
 	}
 
 	// Open reconfiguration device
 	retval = devcfg_init(&(*self)->devcfg);
 	if (retval) {
 		ERROR_PRINT("fred_sys: unable to open devcfg device\n");
-		goto error_clean;
+		goto error_devcfg;
 	}
 
 	// Initalize scheduler
 	retval = sched_init(&(*self)->scheduler, (*self)->devcfg);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while initializing scheduler\n");
-		goto error_clean;
+		goto error_sched;
 	}
 
 	// Link scheduler to devcfg
@@ -119,7 +119,7 @@ int fred_sys_init(struct fred_sys **self, const char *arch_file,
 							(*self)->scheduler, (*self)->buffctl);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while initializing system layout\n");
-		goto error_clean;
+		goto error_sys_layout;
 	}
 
 	// For debugging purposes
@@ -130,13 +130,28 @@ int fred_sys_init(struct fred_sys **self, const char *arch_file,
 									(*self)->reactor, (*self)->scheduler, (*self)->buffctl);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while initializing sw-task listener\n");
-		goto error_clean;
+		goto error_sw_task_listner;
 	}
 
 	return 0;
 
-error_clean:
-	fred_sys_free(*self);
+// Error handling chain
+error_sw_task_listner:
+	sys_layout_free((*self)->layout);
+error_sys_layout:
+	sched_free((*self)->scheduler);
+error_sched:
+	devcfg_free((*self)->devcfg);
+error_devcfg:
+	buffctl_close((*self)->buffctl);
+error_buffctl:
+	signals_recv_free((*self)->signals_receiver);
+error_signals_recv:
+	reactor_free((*self)->reactor);
+error_reactor:
+	logger_free();
+error_logger:
+	free(*self);
 	return -1;
 }
 
@@ -212,5 +227,7 @@ int fred_sys_run(struct fred_sys *self)
 	}
 
 	// Start event loop
-	return reactor_event_loop(self->reactor);
+	reactor_event_loop(self->reactor);
+
+	return 0;
 }
