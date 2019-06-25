@@ -17,6 +17,8 @@
 #include <stdint.h>
 #include <time.h>
 
+#include "../parameters.h"
+
 #define LOG_LEV_MUTE		0
 #define LOG_LEV_SIMPLE		1
 #define LOG_LEV_FULL		2

@@ -10,8 +10,6 @@
  * (at your option) any later version.
 */
 
-#ifndef USE_POLL
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -19,11 +17,14 @@
 #include <unistd.h>
 #include <assert.h>
 #include <string.h>
+#include <errno.h>
 
 #include "reactor.h"
 #include "event_handler.h"
 #include "../parameters.h"
 #include "../utils/dbg_print.h"
+
+#ifndef USE_POLL
 
 //---------------------------------------------------------------------------------------------
 
@@ -61,8 +62,7 @@ void free_event_source_(struct reactor *self, struct event_source_ *event_src)
 	// Get handler name for print
 	event_src->handler->get_name(event_src->handler, handler_name, MAX_NAMES);
 
-	DBG_PRINT("fred_sys: epoll reactor: removing event handler %s on file %d\n",
-				handler_name, event_src->handler->get_fd_handle(event_src->handler));
+	DBG_PRINT("fred_sys: epoll reactor: removing event handler %s\n", handler_name);
 
 	// Free the event handler object
 	event_src->handler->free(event_src->handler);

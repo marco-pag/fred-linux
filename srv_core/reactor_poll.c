@@ -10,8 +10,6 @@
  * (at your option) any later version.
 */
 
-#ifdef USE_POLL
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -20,11 +18,14 @@
 #include <unistd.h>
 #include <assert.h>
 #include <string.h>
+#include <errno.h>
 
 #include "reactor.h"
 #include "event_handler.h"
 #include "../parameters.h"
 #include "../utils/dbg_print.h"
+
+#ifdef USE_POLL
 
 //---------------------------------------------------------------------------------------------
 
@@ -58,15 +59,18 @@ static
 void free_event_source_(struct reactor *self, int i)
 {
 	char handler_name[MAX_NAMES];
+	struct event_source_ *event_source;
+
+	// Get event source from the repository
+	event_source = &self->events_sources[i];
 
 	// Get handler name for print
-	event_src->handler->get_name(event_src->handler, handler_name, MAX_NAMES);
+	event_source->handler->get_name(event_source->handler, handler_name, MAX_NAMES);
 
-	DBG_PRINT("fred_sys: poll reactor: removing event handler %s on file %d\n",
-				handler_name, event_src->handler->get_fd_handle(event_src->handler));
+	DBG_PRINT("fred_sys: poll reactor: removing event handler %s\n", handler_name);
 
 	// Free the event handler object
-	event_src->handler->free(event_src->handler);
+	event_source->handler->free(event_source->handler);
 
 	// Remove event source and compact arrays
 	memmove(&self->events_sources[i],
@@ -77,18 +81,16 @@ void free_event_source_(struct reactor *self, int i)
 			&self->events_fds[i + 1],
 			(self->events_count - 1 - i) * sizeof(self->events_fds[0]));
 
-	self->events_count--;
+	self->events_sources[self->events_count - 1].handler = NULL;
+	self->events_sources[self->events_count - 1].active = 0;
 
-	event_src->handler = NULL;
-	event_src->active = 0;
+	self->events_count--;
 }
 
 // Called during shutdown
 static
 void free_all_events_source_(struct reactor *self)
 {
-	char handler_name[MAX_NAMES];
-
 	for (int i = 0; i < MAX_EVENTS_SRCS; ++i) {
 		if (self->events_sources[i].active) {
 			free_event_source_(self, i);
@@ -139,27 +141,33 @@ void reactor_event_loop(struct reactor *self)
 	int retval;
 
 	while (1) {
-		retval = poll(&self->events_fds, self->events_count, -1);
+		retval = poll(&self->events_fds[0], self->events_count, -1);
 		if (retval < 0) {
 			ERROR_PRINT("fred_sys: poll reactor: poll error %s\n", strerror(errno));
 			return;
 		} else {
-			// Handle event
-			retval = event_src->handler->handle_event(event_src->handler);
+			// Handle events
+			for (int i = 0; i < self->events_count; ++i) {
+				// Ready for a read
+				if (self->events_fds[i].revents & POLLIN) {
+					// Handle event
+					retval = self->events_sources[i].handler->handle_event(
+								self->events_sources[i].handler);
 
-			// Single client error -> detach handler
-			if (retval > 0) {
-				free_event_source_(self, event_src);
+					// Single client error -> detach handler
+					if (retval > 0) {
+						free_event_source_(self, i);
 
-			// System error -> shutdown
-			} else if (retval < 0) {
-				free_all_events_source_(self);
-				ERROR_PRINT("fred_sys: epoll reactor: shutting down event loop");
-				return;
+					// System error -> shutdown
+					} else if (retval < 0) {
+						free_all_events_source_(self);
+						ERROR_PRINT("fred_sys: poll reactor: shutting down event loop");
+						return;
+					}
+				}
 			}
 		}
 	}
-
 }
 
 int reactor_init(struct reactor **self)
@@ -182,4 +190,4 @@ void reactor_free(struct reactor *self)
 	free(self);
 }
 
-#ifdef //USE_POLL
+#endif //USE_POLL
