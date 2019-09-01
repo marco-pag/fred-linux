@@ -28,8 +28,8 @@ const char comm = '#';
 
 struct tokens {
 	char **lines_tokens[MAX_LINES];		// Arrays
-	size_t tokens_count[MAX_LINES];		// Tokens for each line (opt)
-	size_t lines_count;					// Numbers of lines (opt)
+	int tokens_count[MAX_LINES];		// Tokens for each line (opt)
+	int lines_count;					// Numbers of lines (opt)
 };
 
 // The line will be modified
@@ -38,9 +38,9 @@ static int tokenize_line_(struct tokens *tokens, char *line)
 	char *saveptr;
 	char *token;
 	char *lineptr = line;
-	size_t t_count = 0;
+	int t_count = 0;
 
-	if(!tokens || !line)
+	if (!tokens || !line)
 		return -1;
 
 	// Remove newline
@@ -96,7 +96,7 @@ static int parse_file_(struct tokens *tokens, const char filename[])
 
 	while (getline(&line, &line_len, file_p) != -1) {
 		if (tokenize_line_(tokens, line) != 0) {
-			ERROR_PRINT("fred_sys: pars: error while parsing file: %s at line: %u\n",
+			ERROR_PRINT("fred_sys: pars: error while parsing file: %s at line: %d\n",
 					filename, tokens->lines_count);
 			retval = -1;
 			break;
@@ -113,10 +113,10 @@ static int parse_file_(struct tokens *tokens, const char filename[])
 static void free_tokens_(struct tokens *tokens)
 {
 	// For each line
-	for (size_t l = 0; tokens->lines_tokens[l] && l < MAX_LINES; ++l) {
+	for (int l = 0; tokens->lines_tokens[l] && l < MAX_LINES; ++l) {
 
 		// For each token in the line
-		for (size_t t = 0; tokens->lines_tokens[l][t] && t < MAX_TOKENS; ++t) {
+		for (int t = 0; tokens->lines_tokens[l][t] && t < MAX_TOKENS; ++t) {
 
 			// Free token string
 			free(tokens->lines_tokens[l][t]);
@@ -157,12 +157,12 @@ void pars_free_tokens(struct tokens *tokens)
 	free(tokens);
 }
 
-size_t pars_get_num_lines(const struct tokens *tokens)
+int pars_get_num_lines(const struct tokens *tokens)
 {
 	return tokens->lines_count;
 }
 
-size_t pars_get_num_tokens(const struct tokens *tokens, size_t line)
+int pars_get_num_tokens(const struct tokens *tokens, int line)
 {
 	if (line >= tokens->lines_count)
 		return 0;
@@ -170,7 +170,7 @@ size_t pars_get_num_tokens(const struct tokens *tokens, size_t line)
 	return tokens->tokens_count[line];
 }
 
-const char *pars_get_token(const struct tokens *tokens, size_t line, size_t num)
+const char *pars_get_token(const struct tokens *tokens, int line, int num)
 {
 	if (line >= tokens->lines_count || num >= tokens->tokens_count[line])
 		return NULL;

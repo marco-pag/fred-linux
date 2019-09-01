@@ -55,7 +55,7 @@ void* user_buff_map(struct user_buff *buff)
 		return NULL;
 	}
 
-	DBG_PRINT("buff: buffer mapped at addresses: %p, length:%u \n",
+	DBG_PRINT("buff: buffer mapped at addresses: %p, length:%zu \n",
 				buff->map_addr, buff->length);
 
 	return buff->map_addr;
@@ -71,7 +71,7 @@ void user_buff_unmap(struct user_buff *buff)
 	}
 
 	if (munmap(buff->map_addr, buff->length)) {
-		DBG_PRINT("buff: could not unmap buff: %p, length:%u \n", buff->map_addr, buff->length);
+		DBG_PRINT("buff: could not unmap buff: %p, length:%zu \n", buff->map_addr, buff->length);
 		return;
 	}
 

@@ -19,10 +19,10 @@ int pars_tokenize(struct tokens **tokens, const char file_name[]);
 
 void pars_free_tokens(struct tokens *tokens);
 
-size_t pars_get_num_lines(const struct tokens *tokens);
+int pars_get_num_lines(const struct tokens *tokens);
 
-size_t pars_get_num_tokens(const struct tokens *tokens, size_t line);
+int pars_get_num_tokens(const struct tokens *tokens, int line);
 
-const char *pars_get_token(const struct tokens *tokens, size_t line, size_t num);
+const char *pars_get_token(const struct tokens *tokens, int line, int num);
 
 #endif /* PARS_H_ */
