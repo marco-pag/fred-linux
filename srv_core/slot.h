@@ -15,6 +15,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <time.h>
 
 #include "event_handler.h"
 #include "scheduler.h"
@@ -66,6 +67,8 @@ struct slot {
 	// Currently configured Hw-task
 	// Consistent when in SLOT_IDLE state
 	struct hw_task *hw_task;
+
+	uint64_t t_begin;
 };
 
 //---------------------------------------------------------------------------------------------
@@ -117,6 +120,18 @@ void slot_set_hw_task(struct slot *self, struct hw_task *hw_task)
 	self->hw_task = hw_task;
 }
 
+// TODO: optimize time keeping
+static inline
+uint32_t slot_get_exec_time_us(const struct slot *self)
+{
+	struct timespec ts_now;
+
+	assert(self);
+
+	clock_gettime(CLOCK_MONOTONIC, &ts_now);
+	return (ts_now.tv_sec * 1000000 + ts_now.tv_nsec / 1000) - self->t_begin;
+}
+
 // For testing purposes
 static inline
 int slot_check_hw_task_consistency(const struct slot *self)
@@ -162,6 +177,7 @@ static inline
 int slot_start_compute(struct slot *self, struct accel_req *exec_req)
 {
 	int retval;
+	struct timespec ts_start;
 
 	assert(self);
 	assert(exec_req);
@@ -171,6 +187,11 @@ int slot_start_compute(struct slot *self, struct accel_req *exec_req)
 	self->exec_req = exec_req;
 	self->state = SLOT_EXEC;
 
+	// Take time
+	clock_gettime(CLOCK_MONOTONIC, &ts_start);
+	self->t_begin = ts_start.tv_sec * 1000000 + ts_start.tv_nsec / 1000;
+
+	// And start
 	retval = slot_drv_start_compute(self->ctrl_dev,
 									accel_req_get_args(exec_req),
 									accel_req_get_args_size(exec_req));

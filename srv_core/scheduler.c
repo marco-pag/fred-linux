@@ -308,9 +308,10 @@ int sched_slot_complete(struct scheduler *self, struct accel_req *request_done)
 	assert(partition);
 
 	logger_log(LOG_LEV_FULL,"\tfred_sys: slot: %d of partition: %s"
-							" completed execution of hw-task: %s",
+							" completed execution of hw-task: %s in %u us",
 							slot_get_index(slot), partition_get_name(partition),
-							hw_task_get_name(accel_req_get_hw_task(request_done)));
+							hw_task_get_name(accel_req_get_hw_task(request_done)),
+							slot_get_exec_time_us(slot));
 
 	// Clear slot device
 	slot_clear_after_compute(slot);
