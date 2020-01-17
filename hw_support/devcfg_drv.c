@@ -11,6 +11,8 @@
 */
 
 #include "devcfg_drv.h"
+#include "../srv_core/phy_bit.h"
+#include "../utils/dbg_print.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -19,58 +21,74 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-
 #include <unistd.h>
 #include <inttypes.h>
-#include <sys/ioctl.h>
-
 #include <string.h>
 
-#include "../utils/dbg_print.h"
+//---------------------------------------------------------------------------------------------
 
-static const char is_part_path[] = "/sys/devices/soc0/amba/f8007000.devcfg/is_partial_bitstream";
-static const char prog_done_path[] = "/sys/devices/soc0/amba/f8007000.devcfg/prog_done";
-static const char devcfg_path[] = "/dev/xdevcfg_mod";
+static const char *phy_bit_rcfg_path = "/sys/class/fpga_manager/fpga0/device/phy_bit_rcfg";
+static const char *phy_bit_addr_path = "/sys/class/fpga_manager/fpga0/device/phy_bit_addr";
+static const char *phy_bit_size_path = "/sys/class/fpga_manager/fpga0/device/phy_bit_size";
+
+//---------------------------------------------------------------------------------------------
 
 struct devcfg_drv_ {
-	int xdev_fd;
+	int phy_bit_rcfg_fd;
+	int phy_bit_addr_fd;
+	int phy_bit_size_fd;
 };
+
+//---------------------------------------------------------------------------------------------
 
 int devcfg_drv_init(devcfg_drv **devcfg)
 {
-	int fd;
 	int retval;
+	int64_t rcfg_us;
 
 	*devcfg = calloc(1, sizeof(**devcfg));
 	if (!(*devcfg))
 		return -1;
 
-	// Set devcfg sysfs attribute for partial bistreams
-	fd = open(is_part_path, O_RDWR);
-	if (fd < 0) {
+	// Open sysfs rcfg pollable attribute
+	(*devcfg)->phy_bit_rcfg_fd = open(phy_bit_rcfg_path, O_RDWR);
+	if ((*devcfg)->phy_bit_rcfg_fd < 0) {
 		free(*devcfg);
-		ERROR_PRINT("fred_devcfg: failed to open sysfs partial bistream attribute\n");
+		ERROR_PRINT("fred_devcfg: failed to open sysfs phy_bit_rcfg attribute\n");
 		return -1;
 	}
 
-	retval = write(fd, "1", 2);
+	// Open sysfs phy bit address write only attribute
+	(*devcfg)->phy_bit_addr_fd = open(phy_bit_addr_path, O_WRONLY);
+	if ((*devcfg)->phy_bit_addr_fd < 0) {
+		close((*devcfg)->phy_bit_rcfg_fd);
+		free(*devcfg);
+		ERROR_PRINT("fred_devcfg: failed to open sysfs phy_bit_addr attribute\n");
+		return -1;
+	}
+
+	// Open sysfs phy bit size write only attribute
+	(*devcfg)->phy_bit_size_fd = open(phy_bit_size_path, O_WRONLY);
+	if ((*devcfg)->phy_bit_size_fd < 0) {
+		close((*devcfg)->phy_bit_addr_fd);
+		close((*devcfg)->phy_bit_rcfg_fd);
+		free(*devcfg);
+		ERROR_PRINT("fred_devcfg: failed to open sysfs phy_bit_size attribute\n");
+		return -1;
+	}
+
+	// Perform an initial dummy read on the rcfg attribute
+	retval = read((*devcfg)->phy_bit_rcfg_fd, &rcfg_us, sizeof(rcfg_us));
 	if (retval < 0) {
+		close((*devcfg)->phy_bit_size_fd);
+		close((*devcfg)->phy_bit_addr_fd);
+		close((*devcfg)->phy_bit_rcfg_fd);
 		free(*devcfg);
-		ERROR_PRINT("fred_devcfg: error while setting sysfs attribute for partial bistreams\n");
+		ERROR_PRINT("fred_devcfg: error while performing inital dummy"
+					"read on sysfs rcfg attribute\n");
 		return -1;
 	}
 
-	close(fd);
-
-	// Open xdevcfg device file
-	fd = open(devcfg_path, O_RDWR);
-	if (fd < 0) {
-		free(*devcfg);
-		ERROR_PRINT("fred_devcfg: could not open xdevcfg device file\n");
-		return -1;
-	}
-
-	(*devcfg)->xdev_fd = fd;
 
 	return 0;
 }
@@ -80,7 +98,9 @@ void devcfg_drv_free(devcfg_drv *devcfg)
 	if (!devcfg)
 		return;
 
-	close(devcfg->xdev_fd);
+	close(devcfg->phy_bit_size_fd);
+	close(devcfg->phy_bit_addr_fd);
+	close(devcfg->phy_bit_rcfg_fd);
 
 	free(devcfg);
 }
@@ -89,55 +109,58 @@ int devcfg_drv_get_fd(const devcfg_drv *devcfg)
 {
 	assert(devcfg);
 
-	return devcfg->xdev_fd;
+	return devcfg->phy_bit_rcfg_fd;
 }
 
-int devcfg_drv_start_prog(const devcfg_drv *devcfg,
-							const struct phy_bitstream *phy_bit)
+int devcfg_drv_start_prog(const devcfg_drv *devcfg, const struct phy_bit *phy_bit)
 {
 	int retval;
+	uintptr_t addr;
+	size_t size;
 
 	assert(devcfg);
 	assert(phy_bit);
 
-	retval = ioctl(devcfg->xdev_fd, PHY_BIT_TRANSFER, phy_bit);
+	addr = phy_bit_get_addr(phy_bit);
+	size = phy_bit_get_size(phy_bit);
+
+	// Write address
+	retval = write(devcfg->phy_bit_addr_fd, &addr, sizeof(addr));
 	if (retval < 0) {
-		ERROR_PRINT("fred_devcfg: phy bitstream transfer fail\n");
+		ERROR_PRINT("fred_devcfg: phy bit addr write fail\n");
 		return retval;
 	}
 
-	return retval;
-}
-
-uint32_t devcfg_drv_clear_evt(const devcfg_drv *devcfg)
-{
-	uint32_t rcfg_us;
-	size_t retval;
-
-	assert(devcfg);
-
-	retval = read(devcfg->xdev_fd, &rcfg_us, sizeof(rcfg_us));
-	if (retval != sizeof(rcfg_us)) {
-		ERROR_PRINT("fred_devcfg: read for clear event error\n");
-		return 0;
+	// Write size
+	retval = write(devcfg->phy_bit_size_fd, &size, sizeof(size));
+	if (retval < 0) {
+		ERROR_PRINT("fred_devcfg: phy bit size write fail\n");
+		return retval;
 	}
 
-	return rcfg_us;
+	// Start reconfiguration
+	retval = write(devcfg->phy_bit_rcfg_fd, "1", 1);
+	if (retval < 0) {
+		ERROR_PRINT("fred_devcfg: phy bit rcfg write fail\n");
+		return retval;
+	}
+
+	return 0;
 }
 
-int devcfg_drv_write_legacy(const devcfg_drv *devcfg, void *bit, size_t bit_len)
+int64_t devcfg_drv_clear_evt(const devcfg_drv *devcfg)
 {
+	int64_t rcfg_us;
 	int retval;
 
 	assert(devcfg);
 
-	// Initiate devcfg DMA transfer
-	retval = write(devcfg->xdev_fd, bit, bit_len);
+	retval = read(devcfg->phy_bit_rcfg_fd, &rcfg_us, sizeof(rcfg_us));
 	if (retval < 0) {
-		ERROR_PRINT("fred_devcfg: error write bitstream legacy\n");
+		ERROR_PRINT("fred_devcfg: read for clear event error\n");
 		return -1;
 	}
 
-	return 0;
+	return rcfg_us;
 }
 

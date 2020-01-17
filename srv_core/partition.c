@@ -76,7 +76,7 @@ int partiton_register_slots(struct partition *self, struct reactor *reactor)
 
 	for (int i = 0; i < self->slots_count; ++i) {
 		retval = reactor_add_event_handler(	reactor,
-											slot_get_event_handler(self->slots[i]));
+											slot_get_event_handler(self->slots[i]), 0);
 		if (retval)
 			return -1;
 	}

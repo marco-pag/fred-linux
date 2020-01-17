@@ -207,12 +207,14 @@ int hw_task_init(struct hw_task **self, uint32_t hw_id, const char *name,
 			return -1;
 		}
 
-		// Fill buffer for xdevcfg with buffers coordinates
-		(*self)->bits_phys[i].length = xdev_length;
-		(*self)->bits_phys[i].phy_addr = fred_buff_if_get_phy_addr((*self)->bits_buffs[i]);
+		// Fill the bitstream support structure with buffers coordinates
+		phy_bit_set(&(*self)->bits_phys[i],
+					fred_buff_if_get_phy_addr((*self)->bits_buffs[i]),
+					xdev_length);
+
 
 		DBG_PRINT("fred_sys: loaded slot %u bitstream for hw-task %s, size: %u\n",
-				i, (*self)->name, (*self)->bits_phys[i].length);
+				i, (*self)->name, phy_bit_get_size(&(*self)->bits_phys[i]));
 
 	}
 

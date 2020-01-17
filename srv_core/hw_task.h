@@ -16,11 +16,11 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "phy_bit.h"
 #include "partition.h"
 #include "../parameters.h"
 #include "../srv_support/buffctl.h"
 #include "../shared_kernel/fred_buffctl_shared.h"
-#include "../shared_kernel/fred_xdevcfg_mod_shared.h"
 
 //---------------------------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ struct hw_task {
 
 	// Bistreams (one for each slot of the partition)
 	struct fred_buff_if *bits_buffs[MAX_SLOTS];			// Side buffer allocator module interface
-	struct phy_bitstream bits_phys[MAX_SLOTS];			// Side xdevcfg module interface [1]
+	struct phy_bit bits_phys[MAX_SLOTS];				// Bitstream in a contiguous buffer [1]
 
 	// Data buffers info (to be used when new buffs for
 	// a client must be allocated)
@@ -42,7 +42,9 @@ struct hw_task {
 	int data_buffs_count;
 };
 
-// [1] Redundant glue struct, will change with the new reconfiguration driver
+// [1] 	- The size maybe less than the buffer size due to proprietary bitstreams mangling
+//		- Future releases will try to use the DMA scatter-gather mode (if available)
+//		  to avoid using contiguous buffers.
 //---------------------------------------------------------------------------------------------
 
 static inline
@@ -86,7 +88,7 @@ const unsigned int *hw_task_get_data_buffs_sizes(const struct hw_task *self)
 }
 
 static inline
-const struct phy_bitstream *hw_task_get_bit_phy(const struct hw_task *self,
+const struct phy_bit *hw_task_get_bit_phy(const struct hw_task *self,
 												int slot_idx)
 {
 	assert(self);

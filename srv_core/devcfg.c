@@ -132,7 +132,7 @@ int devcfg_start_prog(struct devcfg *self, struct accel_req *request)
 	return devcfg_drv_start_prog(self->drv, accel_req_get_phy_bit(request));
 }
 
-uint32_t devcfg_clear_evt(struct devcfg *self)
+int64_t devcfg_clear_evt(struct devcfg *self)
 {
 	assert(self);
 	assert(self->state == DEVCFG_PROG);

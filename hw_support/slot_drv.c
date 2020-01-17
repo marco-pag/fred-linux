@@ -125,6 +125,3 @@ void slot_drv_wait_for_compl(const uio_dev_ft *uio_dev)
 		reg = REG_READ(base_addr, SLOT_CTRL_BUS_ADDR_AP_CTRL);
 	} while( reg & 0x1 );
 }
-
-
-

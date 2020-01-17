@@ -84,7 +84,8 @@ void free_all_events_source_(struct reactor *self)
 
 //--- Reactor interface implementation --------------------------------------------------------
 
-int reactor_add_event_handler(struct reactor *self, struct event_handler *event_handler)
+int reactor_add_event_handler(struct reactor *self, struct event_handler *event_handler,
+								int pri_mode)
 {
 	int retval;
 	int handler_fd = 0;
@@ -105,7 +106,11 @@ int reactor_add_event_handler(struct reactor *self, struct event_handler *event_
 			self->events_sources[i].active = 1;
 
 			// Fill the epoll event structure and link the event handler wrapper
-			epoll_event.events = EPOLLIN;
+			if (!pri_mode)
+				epoll_event.events = EPOLLIN;
+			else
+				epoll_event.events = EPOLLPRI;
+
 			epoll_event.data.ptr = &self->events_sources[i];
 
 			// Get handler name and file descriptor

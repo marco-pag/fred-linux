@@ -95,7 +95,7 @@ void devcfg_attach_scheduler(struct devcfg *self, struct scheduler *sched);
 
 int devcfg_start_prog(struct devcfg *self, struct accel_req *request);
 
-uint32_t devcfg_clear_evt(struct devcfg *self);
+int64_t devcfg_clear_evt(struct devcfg *self);
 
 //---------------------------------------------------------------------------------------------
 

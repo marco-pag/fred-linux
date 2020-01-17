@@ -19,7 +19,7 @@
 
 //---------------------------------------------------------------------------------------------
 
-const struct phy_bitstream *accel_req_get_phy_bit(const struct accel_req *self)
+const struct phy_bit *accel_req_get_phy_bit(const struct accel_req *self)
 {
 	assert(self);
 	assert(self->slot);

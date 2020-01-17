@@ -248,7 +248,7 @@ int sched_push_accel_req(struct scheduler *self, struct accel_req *request)
 int sched_rcfg_complete(struct scheduler *self, struct accel_req *request_done)
 {
 	struct slot *slot;
-	uint32_t rcfg_time_us;
+	int rcfg_time_us;
 
 	assert(self);
 	assert(request_done);
@@ -258,10 +258,10 @@ int sched_rcfg_complete(struct scheduler *self, struct accel_req *request_done)
 	assert(slot);
 
 	// Clear devcfg event
-	rcfg_time_us = devcfg_clear_evt(self->devcfg);
+	rcfg_time_us = (int)devcfg_clear_evt(self->devcfg);
 
 	logger_log(LOG_LEV_FULL,"\tfred_sys: event: devcfg, slot: %d of partition: %s"
-							" rcfg completed for hw-task: %s in %u us",
+							" rcfg completed for hw-task: %s in %d us",
 							slot_get_index(slot),
 							partition_get_name(hw_task_get_partition(
 								accel_req_get_hw_task(request_done))),

@@ -196,7 +196,7 @@ int fred_sys_run(struct fred_sys *self)
 
 	// Register file based signal handler
 	retval = reactor_add_event_handler(self->reactor,
-									signals_recv_get_event_handler(self->signals_receiver));
+									signals_recv_get_event_handler(self->signals_receiver), 0);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while registering signals handler\n");
 		return -1;
@@ -205,7 +205,7 @@ int fred_sys_run(struct fred_sys *self)
 
 	// Register reconfiguration device event handler
 	// (and source) to the reactor
-	retval = reactor_add_event_handler(self->reactor, devcfg_get_event_handler(self->devcfg));
+	retval = reactor_add_event_handler(self->reactor, devcfg_get_event_handler(self->devcfg), 1);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while registering reconfiguration device handler\n");
 		return -1;
@@ -220,7 +220,7 @@ int fred_sys_run(struct fred_sys *self)
 
 	// Register sw-task listener
 	retval = reactor_add_event_handler(self->reactor,
-								sw_tasks_listener_get_event_handler(self->sw_tasks_listener));
+								sw_tasks_listener_get_event_handler(self->sw_tasks_listener), 0);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while registering sw-task listener handler\n");
 		return -1;

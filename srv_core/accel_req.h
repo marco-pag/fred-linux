@@ -19,6 +19,7 @@
 #include <sys/queue.h>
 
 #include "../parameters.h"
+#include "../srv_core/phy_bit.h"
 
 //---------------------------------------------------------------------------------------------
 // Forward declarations to avoid circular dependencies
@@ -199,7 +200,7 @@ int accel_req_compare_timestamps(const struct accel_req *self,
 
 int accel_req_notify_action(struct accel_req *self);
 
-const struct phy_bitstream *accel_req_get_phy_bit(const struct accel_req *self);
+const struct phy_bit *accel_req_get_phy_bit(const struct accel_req *self);
 
 //---------------------------------------------------------------------------------------------
 

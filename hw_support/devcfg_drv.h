@@ -13,10 +13,14 @@
 #ifndef DEVCFG_DRV_H_
 #define DEVCFG_DRV_H_
 
-#include <stddef.h>
-#include "../shared_kernel/fred_xdevcfg_mod_shared.h"
+#include <stdint.h>
+#include "../srv_core/phy_bit.h"
+
+//---------------------------------------------------------------------------------------------
 
 typedef struct devcfg_drv_ devcfg_drv;
+
+//---------------------------------------------------------------------------------------------
 
 int devcfg_drv_init(devcfg_drv **self);
 
@@ -24,11 +28,10 @@ void devcfg_drv_free(devcfg_drv *devcfg);
 
 int devcfg_drv_get_fd(const devcfg_drv *devcfg);
 
-int devcfg_drv_start_prog(const devcfg_drv *devcfg,
-							const struct phy_bitstream *phy_bit);
+int devcfg_drv_start_prog(const devcfg_drv *devcfg, const struct phy_bit *phy_bit);
 
-uint32_t devcfg_drv_clear_evt(const devcfg_drv *devcfg);
+int64_t devcfg_drv_clear_evt(const devcfg_drv *devcfg);
 
-int devcfg_drv_write_legacy(const devcfg_drv *devcfg, void *bit, size_t bit_len);
+//---------------------------------------------------------------------------------------------
 
 #endif /* DEVCFG_DRV_H_ */

@@ -52,7 +52,7 @@ int handle_event_(void *self)
 	sw_task_client_init(&cp, lp->list_sock, lp->sys, lp->sched, lp->buffctl);
 
 	// And register to the reactor
-	reactor_add_event_handler(lp->reactor, sw_task_client_get_event_handler(cp));
+	reactor_add_event_handler(lp->reactor, sw_task_client_get_event_handler(cp), 0);
 
 	return 0;
 }
