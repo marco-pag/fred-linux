@@ -109,7 +109,7 @@ int reactor_add_event_handler(struct reactor *self, struct event_handler *event_
 			if (!pri_mode)
 				epoll_event.events = EPOLLIN;
 			else
-				epoll_event.events = EPOLLPRI;
+				epoll_event.events = EPOLLERR | EPOLLPRI;
 
 			epoll_event.data.ptr = &self->events_sources[i];
 
@@ -163,13 +163,10 @@ void reactor_event_loop(struct reactor *self)
 				free_event_source_(self, event_src);
 				continue;
 
-			} else if (epoll_events[i].events & EPOLLERR) {
+			} else if ((epoll_events[i].events & EPOLLERR) && !(epoll_events[i].events & EPOLLPRI)) {
 				ERROR_PRINT("fred_sys: epoll reactor: epoll_wait error\n");
 				goto exit_clear;
 
-			} else if (!(epoll_events[i].events & EPOLLIN)) {
-				ERROR_PRINT("fred_sys: epoll reactor: event is not EPOLLIN, continue\n");
-				goto exit_clear;
 			}
 
 			assert(event_src);

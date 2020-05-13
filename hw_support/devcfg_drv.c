@@ -27,9 +27,9 @@
 
 //---------------------------------------------------------------------------------------------
 
-static const char *phy_bit_rcfg_path = "/sys/class/fpga_manager/fpga0/device/phy_bit_rcfg";
-static const char *phy_bit_addr_path = "/sys/class/fpga_manager/fpga0/device/phy_bit_addr";
-static const char *phy_bit_size_path = "/sys/class/fpga_manager/fpga0/device/phy_bit_size";
+static const char *phy_bit_rcfg_path = "/sys/class/fpga_manager/fpga0/phy_bit_rcfg";
+static const char *phy_bit_addr_path = "/sys/class/fpga_manager/fpga0/phy_bit_addr";
+static const char *phy_bit_size_path = "/sys/class/fpga_manager/fpga0/phy_bit_size";
 
 //---------------------------------------------------------------------------------------------
 
@@ -115,31 +115,31 @@ int devcfg_drv_get_fd(const devcfg_drv *devcfg)
 int devcfg_drv_start_prog(const devcfg_drv *devcfg, const struct phy_bit *phy_bit)
 {
 	int retval;
-	uintptr_t addr;
-	size_t size;
+	char addr_str[24];
+	char size_str[24];
 
 	assert(devcfg);
 	assert(phy_bit);
 
-	addr = phy_bit_get_addr(phy_bit);
-	size = phy_bit_get_size(phy_bit);
+	snprintf(addr_str, sizeof addr_str, "%xl", phy_bit_get_addr(phy_bit));
+	snprintf(size_str, sizeof addr_str, "%ul", phy_bit_get_size(phy_bit));
 
 	// Write address
-	retval = write(devcfg->phy_bit_addr_fd, &addr, sizeof(addr));
+	retval = write(devcfg->phy_bit_addr_fd, addr_str, sizeof(addr_str));
 	if (retval < 0) {
 		ERROR_PRINT("fred_devcfg: phy bit addr write fail\n");
 		return retval;
 	}
 
 	// Write size
-	retval = write(devcfg->phy_bit_size_fd, &size, sizeof(size));
+	retval = write(devcfg->phy_bit_size_fd, size_str, sizeof(size_str));
 	if (retval < 0) {
 		ERROR_PRINT("fred_devcfg: phy bit size write fail\n");
 		return retval;
 	}
 
 	// Start reconfiguration
-	retval = write(devcfg->phy_bit_rcfg_fd, "1", 1);
+	retval = write(devcfg->phy_bit_rcfg_fd, "1", 2);
 	if (retval < 0) {
 		ERROR_PRINT("fred_devcfg: phy bit rcfg write fail\n");
 		return retval;
@@ -150,16 +150,19 @@ int devcfg_drv_start_prog(const devcfg_drv *devcfg, const struct phy_bit *phy_bi
 
 int64_t devcfg_drv_clear_evt(const devcfg_drv *devcfg)
 {
-	int64_t rcfg_us;
 	int retval;
+	int64_t rcfg_us;
+	char rcfg_us_str[64];
 
 	assert(devcfg);
 
-	retval = read(devcfg->phy_bit_rcfg_fd, &rcfg_us, sizeof(rcfg_us));
+	retval = read(devcfg->phy_bit_rcfg_fd, rcfg_us_str, sizeof(rcfg_us_str));
 	if (retval < 0) {
 		ERROR_PRINT("fred_devcfg: read for clear event error\n");
 		return -1;
 	}
+
+	sscanf(rcfg_us_str, "%llu", &rcfg_us);
 
 	return rcfg_us;
 }

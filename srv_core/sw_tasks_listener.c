@@ -90,7 +90,7 @@ int open_listening_socket_()
 	// Listening socket
 	listen_sock = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (listen_sock < 0) {
-		perror("fred_sys: error on opening socket");
+		ERROR_PRINT("fred_sys: error on opening socket");
 		return -1;
 	}
 
@@ -106,14 +106,14 @@ int open_listening_socket_()
 	addr_len = strlen(serv_addr.sun_path) + sizeof(serv_addr.sun_family);
 	retval = bind(listen_sock, (struct sockaddr *)&serv_addr, addr_len);
 	if (retval < 0) {
-		perror("fred_sys: error on bind");
+		ERROR_PRINT("fred_sys: error on bind");
 		return -1;
 	}
 
 	// One client per hw-task
 	retval = listen(listen_sock, MAX_SW_TASKS);
 	if (retval < 0) {
-		perror("fred_sys: error on listen");
+		ERROR_PRINT("fred_sys: error on listen");
 		return -1;
 	}
 
