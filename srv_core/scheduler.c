@@ -259,8 +259,10 @@ int sched_rcfg_complete(struct scheduler *self, struct accel_req *request_done)
 
 	// Clear devcfg event
 	rcfg_time_us = (int)devcfg_clear_evt(self->devcfg);
+	if (rcfg_time_us <= 0)
+		return -1;
 
-	logger_log(LOG_LEV_FULL,"\tfred_sys: event: devcfg, slot: %d of partition: %s"
+	logger_log(LOG_LEV_FULL,"\tfred_sys: devcfg, slot: %d of partition: %s"
 							" rcfg completed for hw-task: %s in %d us",
 							slot_get_index(slot),
 							partition_get_name(hw_task_get_partition(

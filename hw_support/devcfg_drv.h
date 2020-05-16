@@ -30,7 +30,7 @@ int devcfg_drv_get_fd(const devcfg_drv *devcfg);
 
 int devcfg_drv_start_prog(const devcfg_drv *devcfg, const struct phy_bit *phy_bit);
 
-int64_t devcfg_drv_clear_evt(const devcfg_drv *devcfg);
+int64_t devcfg_drv_clear_evt(devcfg_drv *devcfg);
 
 //---------------------------------------------------------------------------------------------
 

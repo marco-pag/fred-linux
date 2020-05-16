@@ -229,7 +229,8 @@ void sys_layout_print(const struct sys_layout *self)
 {
 	char name[MAX_NAMES];
 
-	DBG_PRINT("--------------------- Layout ----------------------\n");
+	DBG_PRINT("------------------------------------ Layout "
+				"------------------------------------\n");
 
 
 	DBG_PRINT("Partitions:\n");
@@ -244,7 +245,8 @@ void sys_layout_print(const struct sys_layout *self)
 		DBG_PRINT("\t%s\n", name);
 	}
 
-	DBG_PRINT("---------------------------------------------------\n");
+	DBG_PRINT("--------------------------------------------"
+				"------------------------------------\n");
 }
 
 int sys_layout_init(struct sys_layout **self, const char *arch_file,
