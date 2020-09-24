@@ -103,7 +103,7 @@ ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_b
 	struct user_buff user_buffer;
 
 	unsigned int b_read;
-	unsigned int file_size;
+	ssize_t file_size;
 	FILE *file_p;
 
 	file_p = fopen(file_name, "r");
@@ -113,7 +113,7 @@ ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_b
 	}
 
 	// Get file length
-	fseek(file_p , 0 , SEEK_END);
+	fseek(file_p, 0, SEEK_END);
 	file_size = ftell(file_p);
 	rewind(file_p);
 
@@ -141,8 +141,12 @@ ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_b
 		return -1;
 	}
 
+#ifndef BIT_MANGLE
+	length = file_size;
+#else
 	// Mangle returns the size for the xdevcfg
 	length = mangle_bitstream_(buff_v, file_size);
+#endif
 
 	// Unmap bistream buffer from server process virtual address space
 	user_buff_unmap(&user_buffer);

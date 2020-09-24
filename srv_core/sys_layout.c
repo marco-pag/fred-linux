@@ -67,7 +67,7 @@ int build_partitions_(struct sys_layout *self, const char *arch_file,
 	if (retval < 0)
 		return -1;
 
-	// Partition file contatins contains one line per partition
+	// Partition file contains one line per partition
 	self->partitions_count = pars_get_num_lines(tokens);
 	if (self->partitions_count >= MAX_PARTITIONS) {
 		ERROR_PRINT("fred_sys: maximum number of partitions exceeded\n");

@@ -145,8 +145,10 @@ int devcfg_drv_start_prog(const devcfg_drv *devcfg, const struct phy_bit *phy_bi
 	assert(devcfg);
 	assert(phy_bit);
 
-	snprintf(addr_str, sizeof addr_str, "%xl", phy_bit_get_addr(phy_bit));
-	snprintf(size_str, sizeof addr_str, "%ul", phy_bit_get_size(phy_bit));
+	snprintf(addr_str, sizeof addr_str, "%#lx\n",
+			(long unsigned int)phy_bit_get_addr(phy_bit));
+	snprintf(size_str, sizeof addr_str, "%lu\n",
+			(long unsigned int)phy_bit_get_size(phy_bit));
 
 	// Write address
 	retval = write(devcfg->phy_bit_addr_fd, &addr_str, sizeof(addr_str));

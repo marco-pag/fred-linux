@@ -5,7 +5,7 @@ deps = $(objs:.o=.d)
 
 LDFLAGS +=
 CFLAGS += -std=gnu99 -Wall -g #-O2
-CFLAGS += -D LOG_GLOBAL_LEVEL=LOG_LEV_FULL
+CFLAGS += -D LOG_GLOBAL_LEVEL=LOG_LEV_FULL -D HW_TASKS_A64
 
 $(bin): $(objs)
 	$(CC) -o $@ $^ $(LDFLAGS)

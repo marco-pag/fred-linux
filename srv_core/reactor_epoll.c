@@ -167,7 +167,6 @@ void reactor_event_loop(struct reactor *self)
 						!(epoll_events[i].events & EPOLLPRI)) {
 				ERROR_PRINT("fred_sys: epoll reactor: epoll_wait error\n");
 				goto exit_clear;
-
 			}
 
 			assert(event_src);

@@ -23,7 +23,7 @@
 
 void decoup_drv_decouple(uio_dev_ft *uio_dev)
 {
-	uint32_t base_addr;
+	uintptr_t base_addr;
 
 	assert(uio_dev);
 
@@ -37,7 +37,7 @@ void decoup_drv_decouple(uio_dev_ft *uio_dev)
 
 void decoup_drv_couple(uio_dev_ft *uio_dev)
 {
-	uint32_t base_addr;
+	uintptr_t base_addr;
 
 	assert(uio_dev);
 

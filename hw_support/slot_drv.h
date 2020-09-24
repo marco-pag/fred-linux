@@ -19,8 +19,13 @@
 
 //---------------------------------------------------------------------------------------------
 
-// Match hardware type
+// HW-tasks bit-width, which may be different form processor bit-width
+#ifdef HW_TASKS_A64
+typedef uint64_t args_t;
+#else
 typedef uint32_t args_t;
+#endif
+
 
 //---------------------------------------------------------------------------------------------
 
