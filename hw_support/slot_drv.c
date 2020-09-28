@@ -39,7 +39,7 @@ struct slot_regs {
 	volatile uint32_t IER;
 	volatile uint32_t ISR;
 	volatile uint32_t ID_DATA;
-	volatile uint8_t RESERVED[16];
+	volatile uint8_t RESERVED[12];
 	volatile uint32_t DATA[SLOT_CTRL_BUS_DEPTH_ARGS];
 } __attribute__((packed));
 #endif
