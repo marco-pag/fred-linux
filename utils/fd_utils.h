@@ -10,17 +10,15 @@
  * (at your option) any later version.
 */
 
-#ifndef GPIO_PROBES_H_
-#define GPIO_PROBES_H_
+#ifndef FD_UTILS_H_
+#define FD_UTILS_H_
 
-#define GPIO_PRB_ENABLED
+int fd_utils_create_socket_pair(int *fd_0, int *fd_1);
 
-int gpio_probes_init();
+int fd_utils_byte_write(int fd);
 
-void gpio_probes_free();
+int fd_utils_byte_read(int fd);
 
-void gpio_probes_set_pin(size_t pin_ixd);
+int fd_utils_set_fd_nonblock(int fd);
 
-void gpio_probes_clear_pin(size_t pin_ixd);
-
-#endif /* GPIO_PROBES_H_ */
+#endif /* FD_UTILS_H_ */

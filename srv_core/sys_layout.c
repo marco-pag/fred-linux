@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -43,8 +43,8 @@ static inline uint32_t str_to_uint32_(const char *string)
 //---------------------------------------------------------------------------------------------
 
 static
-int build_partitions_(struct sys_layout *self, const char *arch_file,
-						struct scheduler *sched)
+int build_partitions_(struct sys_layout *self, const struct sys_hw_config *hw_config,
+						const char *arch_file, struct scheduler *scheduler)
 {
 	int retval = 0;
 	char arch_path[MAX_PATH];
@@ -98,7 +98,7 @@ int build_partitions_(struct sys_layout *self, const char *arch_file,
 			sprintf(dec_name, "pr_decoupler_p%u_s%u", p, s);
 
 			// Create a new slot
-			retval = slot_init(&slot, s, dev_name, dec_name, sched);
+			retval = slot_init(&slot, hw_config, s, dev_name, dec_name, scheduler);
 			if (retval < 0) {
 				ERROR_PRINT("fred_sys: error: unable to initialize slot %u of "
 							"partition %s\n", s, part_name);
@@ -209,6 +209,17 @@ struct hw_task *sys_layout_get_hw_task(const struct sys_layout *self, uint32_t h
 	return NULL;
 }
 
+int sys_layout_get_hw_tasks(const struct sys_layout *self, struct hw_task **hw_tasks)
+{
+	if (!self || !hw_tasks)
+		return -1;
+
+	for (int i = 0; i < self->hw_tasks_count; ++i)
+		hw_tasks[i] = self->hw_tasks[i];
+
+	return self->hw_tasks_count;
+}
+
 int sys_layout_register_slots(struct sys_layout *self, struct reactor *reactor)
 {
 	int retval;
@@ -249,12 +260,14 @@ void sys_layout_print(const struct sys_layout *self)
 				"------------------------------------\n");
 }
 
-int sys_layout_init(struct sys_layout **self, const char *arch_file,
-					const char *hw_tasks_file, struct scheduler *sched, buffctl_ft *buffctl)
+int sys_layout_init(struct sys_layout **self, const struct sys_hw_config *hw_config,
+					const char *arch_file, const char *hw_tasks_file,
+					struct scheduler *scheduler, buffctl_ft *buffctl)
 {
 	int retval;
 
 	assert(buffctl);
+	assert(scheduler);
 	assert(arch_file);
 	assert(hw_tasks_file);
 
@@ -267,7 +280,7 @@ int sys_layout_init(struct sys_layout **self, const char *arch_file,
 
 	(*self)->buffctl = buffctl;
 
-	retval = build_partitions_(*self, arch_file, sched);
+	retval = build_partitions_(*self, hw_config, arch_file, scheduler);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while building partitions\n");
 		goto error_clean;

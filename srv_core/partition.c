@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -40,7 +40,6 @@ int partition_search_slot(struct partition *self, struct slot **slot,
 	int rcfg = 1;
 
 	assert(self);
-	assert(slot);
 	assert(hw_task);
 
 	// For all slots in the partition
@@ -76,7 +75,8 @@ int partiton_register_slots(struct partition *self, struct reactor *reactor)
 
 	for (int i = 0; i < self->slots_count; ++i) {
 		retval = reactor_add_event_handler(	reactor,
-											slot_get_event_handler(self->slots[i]), 0);
+											slot_get_event_handler(self->slots[i]),
+											REACT_NORMAL_HANDLER, REACT_NOT_OWNED);
 		if (retval)
 			return -1;
 	}
@@ -110,7 +110,7 @@ void partition_free(struct partition *self)
 
 	for (int i = 0; i < MAX_SLOTS; ++i) {
 		if (self->slots[i])
-			slot_free(self->slots[i]);
+			event_handler_free(slot_get_event_handler(self->slots[i]));
 	}
 
 	free(self);

@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,6 @@
 
 struct slot;
 struct hw_task;
-struct sw_task_client;
 
 //---------------------------------------------------------------------------------------------
 
@@ -40,9 +39,6 @@ struct accel_req {
 	struct hw_task *hw_task;
 	struct slot *slot;
 
-	// Parent client
-	struct sw_task_client *sw_task_client;
-
 	// Issuing time stamp
 	struct timespec tstamp;
 
@@ -51,8 +47,8 @@ struct accel_req {
 
 	// Notify when the request has been executed
 	// (whole acceleration process has been completed)
-	int (*notify_action)(void *self, int notify_sock);
-	int notify_sock;
+	int (*notify_action)(void *self);
+	void *notifier;
 
 	// List element (next and previous element pointers)
 	TAILQ_ENTRY(accel_req) queue_elem;
@@ -151,17 +147,29 @@ static inline
 void accel_req_set_hw_task(struct accel_req *self, struct hw_task *hw_task)
 {
 	assert(self);
+	assert(hw_task);
 
 	self->hw_task = hw_task;
 }
 
 static inline
-void accel_req_set_sw_task_client(struct accel_req *self,
-									struct sw_task_client *sw_task_client)
+void accel_req_set_notifier(struct accel_req *self,
+							int (*notify_action)(void *), void *notifier)
+{
+	assert(self);
+	assert(notify_action);
+	assert(notifier);
+
+	self->notify_action = notify_action;
+	self->notifier = notifier;
+}
+
+static inline
+int accel_req_notify_action(struct accel_req *self)
 {
 	assert(self);
 
-	self->sw_task_client = sw_task_client;
+	return self->notify_action(self->notifier);
 }
 
 static inline
@@ -197,8 +205,6 @@ int accel_req_compare_timestamps(const struct accel_req *self,
 }
 
 //---------------------------------------------------------------------------------------------
-
-int accel_req_notify_action(struct accel_req *self);
 
 const struct phy_bit *accel_req_get_phy_bit(const struct accel_req *self);
 

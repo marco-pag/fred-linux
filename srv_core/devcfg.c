@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,14 +13,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "devcfg.h"
+
 #include "accel_req.h"
 #include "slot.h"
+#include "devcfg.h"
+
+#include "../hw_support/devcfg_drv_fpga_mgr.h"
 
 // ---------------------- Functions to implement event_handler interface ----------------------
 
 static
-int get_fd_handle_(void *self)
+int get_fd_handle_(const struct event_handler *self)
 {
 	struct devcfg *dev;
 
@@ -31,20 +34,21 @@ int get_fd_handle_(void *self)
 }
 
 static
-int handle_event_(void *self)
+int handle_event_(struct event_handler *self)
 {
 	struct devcfg *dev;
+	int retval;
 
 	assert(self);
 
 	dev = (struct devcfg *)self;
-	sched_rcfg_complete(dev->sched, dev->current_rcfg_req);
+	retval = scheduler_rcfg_complete(dev->scheduler, dev->current_rcfg_req);
 
-	return 0;
+	return retval;
 }
 
 static
-void get_name_(void *self, char *msg, int msg_size)
+void get_name_(const struct event_handler *self, char *msg, int msg_size)
 {
 	struct devcfg *dev;
 
@@ -55,19 +59,28 @@ void get_name_(void *self, char *msg, int msg_size)
 	snprintf(msg, msg_size, "devcfg on fd: %d", devcfg_drv_get_fd(dev->drv));
 }
 
-// Cannot be deallocated through the handler by the reactor
-// Must be deallocated manually
 static
-void free_(void *self)
+void free_(struct event_handler *self)
 {
-	// Empty
+	struct devcfg *dev;
+
+	if (!self)
+		return;
+
+	dev = (struct devcfg *)self;
+
+	if (dev->drv)
+		devcfg_drv_free(dev->drv);
+
+	free(dev);
 }
 
 //---------------------------------------------------------------------------------------------
 
-int devcfg_init(struct devcfg **self)
+int devcfg_init(struct devcfg **self, const struct sys_hw_config *hw_config)
 {
 	int retval;
+	enum sys_devcfg_type devcfg_type;
 
 	*self = calloc(1, sizeof(**self));
 	if (!(*self))
@@ -75,43 +88,41 @@ int devcfg_init(struct devcfg **self)
 
 	event_handler_assign_id(&(*self)->handler);
 
-	retval = devcfg_drv_init(&(*self)->drv);
-	if (retval) {
-		free(*self);
-		return -1;
-	}
-
 	// Set properties and methods
 	(*self)->state = DEVCFG_INIT;
 
 	// Event handler interface
-	(*self)->handler.self = *self;
 	(*self)->handler.handle_event = handle_event_;
 	(*self)->handler.get_fd_handle = get_fd_handle_;
 	(*self)->handler.get_name = get_name_;
 	(*self)->handler.free = free_;
 
+	// Initialize FPGA driver
+	devcfg_type = sys_hw_config_get_devcfg_type(hw_config);
+
+	switch (devcfg_type) {
+		case SYS_DEVCFG_FPGA_MGR:
+		case SYS_DEVCFG_NULL:		// To be implemented
+		default:
+			retval = devcfg_drv_fpga_mgr_init(&(*self)->drv);
+			break;
+	}
+
+	if (retval) {
+		free(*self);
+		return -1;
+	}
+
 	return 0;
 }
 
-void devcfg_free(struct devcfg *self)
-{
-	if (!self)
-		return;
-
-	if (self->drv)
-		devcfg_drv_free(self->drv);
-
-	free(self);
-}
-
-void devcfg_attach_scheduler(struct devcfg *self, struct scheduler *sched)
+void devcfg_attach_scheduler(struct devcfg *self, struct scheduler *scheduler)
 {
 	assert(self);
-	assert(sched);
+	assert(scheduler);
 	assert(self->state == DEVCFG_INIT);
 
-	self->sched = sched;
+	self->scheduler = scheduler;
 	self->state = DEVCFG_IDLE;
 }
 
@@ -129,7 +140,7 @@ int devcfg_start_prog(struct devcfg *self, struct accel_req *request)
 	slot_set_hw_task(accel_req_get_slot(request), accel_req_get_hw_task(request));
 
 	// And start reconfiguration
-	return devcfg_drv_start_prog(self->drv, accel_req_get_phy_bit(request));
+	return devcfg_drv_start_rcfg(self->drv, accel_req_get_phy_bit(request));
 }
 
 int64_t devcfg_clear_evt(struct devcfg *self)
@@ -139,6 +150,6 @@ int64_t devcfg_clear_evt(struct devcfg *self)
 
 	self->state = DEVCFG_IDLE;
 
-	return devcfg_drv_clear_evt(self->drv);
+	return devcfg_drv_after_rcfg(self->drv);
 }
 

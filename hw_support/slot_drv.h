@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,47 +14,98 @@
 #define SLOT_DRV_H_
 
 #include <stdint.h>
-
-#include "uio_drv.h"
-
-//---------------------------------------------------------------------------------------------
-
-// HW-tasks bit-width, which may be different form processor bit-width
-#ifdef HW_TASKS_A64
-typedef uint64_t args_t;
-#else
-typedef uint32_t args_t;
-#endif
-
+#include <assert.h>
 
 //---------------------------------------------------------------------------------------------
 
-#define slot_drv_dev_init(uio_dev, dev_name) \
-		uio_dev_init(uio_dev, dev_name)
+struct slot_drv {
 
-#define	slot_drv_dev_free(uio_dev) \
-		uio_dev_free(uio_dev)
+	uint32_t (*get_id)(const struct slot_drv *self);
 
-#define slot_drv_read_for_irq(uio_dev) \
-		uio_read_for_irq(uio_dev)
+	int (*get_fd)(const struct slot_drv *self);
 
-#define	slot_drv_clear_gic(uio_dev) \
-		uio_clear_gic(uio_dev)
+	void (*before_rcfg)(struct slot_drv *self);
 
-#define slot_drv_get_fd(uio_dev) \
-		uio_get_fd(uio_dev)
+	void (*after_rcfg)(struct slot_drv *self);
+
+	int (*start_compute)(struct slot_drv *self, const uintptr_t *args, int args_size);
+
+	void (*after_compute)(struct slot_drv *self);
+
+	// Only for testing
+	void (*wait_for_compl)(const struct slot_drv *self);
+
+	void (*free)(struct slot_drv *self);
+};
+
 
 //---------------------------------------------------------------------------------------------
 
-void slot_drv_enable_irq(uio_dev_ft *uio_dev);
+static inline
+uint32_t slot_drv_get_id(const struct slot_drv *self)
+{
+	assert(self);
 
-void slot_drv_clear_int(uio_dev_ft *uio_dev);
+	return self->get_id(self);
+}
 
-uint32_t slot_drv_get_id(const uio_dev_ft *uio_dev);
+static inline
+int slot_drv_get_fd(const struct slot_drv *self)
+{
+	assert(self);
 
-int slot_drv_start_compute(uio_dev_ft *uio_dev, const args_t *args, int args_size);
+	return self->get_fd(self);
+}
 
-void slot_drv_wait_for_compl(const uio_dev_ft *uio_dev);
+static inline
+void slot_drv_before_rcfg(struct slot_drv *self)
+{
+	assert(self);
+
+	self->before_rcfg(self);
+}
+
+static inline
+void slot_drv_after_rcfg(struct slot_drv *self)
+{
+	assert(self);
+
+	self->after_rcfg(self);
+}
+
+static inline
+int slot_drv_start_compute(struct slot_drv *self, const uintptr_t *args, int args_size)
+{
+	assert(self);
+	assert(args);
+	assert(args_size >= 0);
+
+	return self->start_compute(self, args, args_size);
+}
+
+static inline
+void slot_drv_after_compute(struct slot_drv *self)
+{
+	assert(self);
+
+	self->after_compute(self);
+}
+
+static inline
+void slot_drv_wait_for_compl(const struct slot_drv *self)
+{
+	assert(self);
+
+	self->wait_for_compl(self);
+}
+
+static inline
+void slot_drv_free(struct slot_drv *self)
+{
+	assert(self);
+
+	self->free(self);
+}
 
 //---------------------------------------------------------------------------------------------
 

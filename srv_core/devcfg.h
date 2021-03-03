@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,35 +17,26 @@
 #include <stdint.h>
 
 #include "event_handler.h"
-#include "scheduler.h"
+#include "accel_req.h"
+#include "../hw_support/sys_hw_config.h"
 #include "../hw_support/devcfg_drv.h"
-
-//---------------------------------------------------------------------------------------------
-
-struct accel_req;
-
-//---------------------------------------------------------------------------------------------
-
-// NOTE:
-// Event handler wrapped around a stripped down version of
-// the reconfiguration driver code.
-// Will be modified in future releases.
+#include "scheduler.h"
 
 //---------------------------------------------------------------------------------------------
 
 struct devcfg {
 	// ------------------------//
-	struct event_handler handler; 	// Handler (inherits)
+	struct event_handler handler;	 	// Handler interface
 	// ------------------------//
 
-	devcfg_drv *drv;				// Handle (source)
+	struct devcfg_drv *drv;				// Handle
 
-	enum {DEVCFG_INIT ,DEVCFG_IDLE, DEVCFG_PROG} state;
+	enum {DEVCFG_INIT, DEVCFG_IDLE, DEVCFG_PROG} state;
 
 	// Pointer to the (single) request under reconfiguration
 	struct accel_req *current_rcfg_req;
 
-	struct scheduler *sched;
+	struct scheduler *scheduler;
 };
 
 //---------------------------------------------------------------------------------------------
@@ -76,22 +67,12 @@ int devcfg_is_prog(const struct devcfg *self)
 	return self->state == DEVCFG_PROG;
 }
 
-static inline
-int devcfg_get_fd(const struct devcfg *self)
-{
-	assert(self);
-
-	return devcfg_drv_get_fd(self->drv);
-}
-
 //---------------------------------------------------------------------------------------------
 
-int devcfg_init(struct devcfg **self);
-
-void devcfg_free(struct devcfg *self);
+int devcfg_init(struct devcfg **self, const struct sys_hw_config *hw_config);
 
 // To avoid cyclic initialization dependency between devcfg and scheduler
-void devcfg_attach_scheduler(struct devcfg *self, struct scheduler *sched);
+void devcfg_attach_scheduler(struct devcfg *self, struct scheduler *scheduler);
 
 int devcfg_start_prog(struct devcfg *self, struct accel_req *request);
 

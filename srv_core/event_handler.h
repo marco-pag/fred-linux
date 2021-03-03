@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,7 @@
 #include <assert.h>
 
 //---------------------------------------------------------------------------------------------
+// Event handler interface
 
 // handle_event() must return:
 // 0 if event has been proper handled
@@ -28,14 +29,13 @@
 //---------------------------------------------------------------------------------------------
 
 struct event_handler {
-	void *self;
 	int id;
 
-	int (*get_fd_handle)(void *self);
-	int (*handle_event)(void *self);
+	int (*get_fd_handle)(const struct event_handler *self);
+	int (*handle_event)(struct event_handler *self);
 
-	void (*get_name)(void *self, char *msg, int msg_size);
-	void (*free)(void *self);
+	void (*get_name)(const struct event_handler *self, char *msg, int msg_size);
+	void (*free)(struct event_handler *self);
 };
 
 //---------------------------------------------------------------------------------------------
@@ -51,11 +51,44 @@ void event_handler_assign_id(struct event_handler *self)
 }
 
 static inline
-int event_handler_get_id(struct event_handler *self)
+int event_handler_get_id(const struct event_handler *self)
 {
 	assert(self);
 
 	return self->id;
+}
+
+static inline
+int event_handler_get_fd_handle(const struct event_handler *self)
+{
+	assert(self);
+
+	return self->get_fd_handle(self);
+}
+
+static inline
+int event_handler_handle_event(struct event_handler *self)
+{
+	assert(self);
+
+	return self->handle_event(self);
+}
+
+static inline
+void event_handler_get_name(const struct event_handler *self, char *msg, int msg_size)
+{
+	assert(self);
+	assert(msg);
+
+	self->get_name(self, msg, msg_size);
+}
+
+static inline
+void event_handler_free(struct event_handler *self)
+{
+	assert(self);
+
+	return self->free(self);
 }
 
 //---------------------------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -177,4 +177,3 @@ const char *pars_get_token(const struct tokens *tokens, int line, int num)
 
 	return tokens->lines_tokens[line][num];
 }
-

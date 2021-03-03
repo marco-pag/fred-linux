@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,25 +32,6 @@
 #include "uio_drv.h"
 #include "../parameters.h"
 #include "../utils/dbg_print.h"
-
-//---------------------------------------------------------------------------------------------
-
-// Simple -single map- UIO device
-struct uio_dev_ {
-	// Device tree name and UIO number
-	// UIO name: (uio<num>)
-	uint32_t uio_num;
-	char dt_name[MAX_NAMES];
-
-	// Device registers
-	uintptr_t regs_addr;
-	size_t regs_size;
-
-	// UIO device fd (when opened)
-	int uio_fd;
-	// Base address when mapped into process space
-	uintptr_t map_base;
-};
 
 //---------------------------------------------------------------------------------------------
 
@@ -96,7 +77,7 @@ int read_line_(char *f_name, char *linebuf)
 
 //---------------------------------------------------------------------------------------------
 
-int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
+int uio_dev_init(struct uio_dev **uio_dev, const char* dev_name)
 {
 	struct dirent **namelist;
 	int dirs;
@@ -188,7 +169,7 @@ int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name)
 	return 0;
 }
 
-void uio_dev_free(uio_dev_ft *uio_dev)
+void uio_dev_free(struct uio_dev *uio_dev)
 {
 	if (!uio_dev)
 		return;
@@ -203,21 +184,21 @@ void uio_dev_free(uio_dev_ft *uio_dev)
 	free(uio_dev);
 }
 
-uintptr_t uio_get_base_addr(const uio_dev_ft *uio_dev)
+uintptr_t uio_get_base_addr(const struct uio_dev *uio_dev)
 {
 	assert(uio_dev);
 
 	return uio_dev->map_base;
 }
 
-int uio_get_fd(const uio_dev_ft *uio_dev)
+int uio_get_fd(const struct uio_dev *uio_dev)
 {
 	assert(uio_dev);
 
 	return uio_dev->uio_fd;
 }
 
-int uio_read_for_irq(uio_dev_ft *uio_dev)
+int uio_read_for_irq(struct uio_dev *uio_dev)
 {
 	int retval;
 	int32_t pending;
@@ -235,7 +216,7 @@ int uio_read_for_irq(uio_dev_ft *uio_dev)
 	return pending;
 }
 
-void uio_clear_gic(uio_dev_ft *uio_dev)
+void uio_clear_gic(struct uio_dev *uio_dev)
 {
 	int retval;
 	static const int32_t reenable = 1;

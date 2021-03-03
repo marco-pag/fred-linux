@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 // ---------------------- Functions to implement event_handler interface ----------------------
 
 static
-int get_fd_handle_(void *self)
+int get_fd_handle_(const struct event_handler *self)
 {
 	struct signals_recv *recv;
 
@@ -35,7 +35,7 @@ int get_fd_handle_(void *self)
 }
 
 static
-int handle_event_(void *self)
+int handle_event_(struct event_handler *self)
 {
 	struct signals_recv *recv;
     struct signalfd_siginfo fdsi;
@@ -79,7 +79,7 @@ int handle_event_(void *self)
 }
 
 static
-void get_name_(void *self, char *msg, int msg_size)
+void get_name_(const struct event_handler *self, char *msg, int msg_size)
 {
 	struct signals_recv *recv;
 
@@ -92,24 +92,35 @@ void get_name_(void *self, char *msg, int msg_size)
 // Cannot be deallocated through the handler by the reactor
 // Must be deallocated manually
 static
-void free_(void *self)
+void free_(struct event_handler *self)
 {
-	// Empty
+	struct signals_recv *recv;
+
+	if (!self)
+		return;
+
+	recv = (struct signals_recv *)self;
+
+	close(recv->fd);
+	free(recv);
 }
 
 //---------------------------------------------------------------------------------------------
 
-int signals_recv_init(struct signals_recv **self)
+int signals_recv_init(struct event_handler **self)
 {
+	struct signals_recv *recv;
 	int retval;
 	sigset_t mask;
 
+	*self = NULL;
+
 	// Allocate and set everything to 0
-	*self = calloc(1, sizeof(**self));
-	if (!(*self))
+	recv = calloc(1, sizeof (*recv));
+	if (!recv)
 		return -1;
 
-    event_handler_assign_id(&(*self)->handler);
+    event_handler_assign_id(&recv->handler);
 
     sigemptyset(&mask);
     sigaddset(&mask, SIGINT);
@@ -120,32 +131,24 @@ int signals_recv_init(struct signals_recv **self)
     retval = sigprocmask(SIG_BLOCK, &mask, NULL);
     if (retval) {
     	ERROR_PRINT("fred_sys: unable to mask signals. Error: %s\n", strerror(errno));
-    	free(*self);
+    	free(recv);
     	return -1;
     }
 
-	(*self)->fd = signalfd(-1, &mask, SFD_NONBLOCK);
-	if ((*self)->fd < 0) {
+    recv->fd = signalfd(-1, &mask, SFD_NONBLOCK);
+	if (recv->fd < 0) {
     	ERROR_PRINT("fred_sys: unable create signals fd. Error: %s\n", strerror(errno));
-    	free(*self);
+    	free(recv);
     	return -1;
 	}
 
 	// Event handler interface
-	(*self)->handler.self = *self;
-	(*self)->handler.handle_event = handle_event_;
-	(*self)->handler.get_fd_handle = get_fd_handle_;
-	(*self)->handler.get_name = get_name_;
-	(*self)->handler.free = free_;
+	recv->handler.handle_event = handle_event_;
+	recv->handler.get_fd_handle = get_fd_handle_;
+	recv->handler.get_name = get_name_;
+	recv->handler.free = free_;
+
+	*self = &recv->handler;
 
 	return 0;
-}
-
-void signals_recv_free(struct signals_recv *self)
-{
-	if (!self)
-		return;
-
-	close(self->fd);
-	free(self);
 }

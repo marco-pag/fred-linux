@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,19 +17,26 @@
 
 //---------------------------------------------------------------------------------------------
 
-const char *ARCH_FILE = "arch.csv";
-const char *HW_TASKS = "hw_tasks.csv";
+static const char *ARCH_FILE = "arch.csv";
+static const char *HW_TASKS_FILE = "hw_tasks.csv";
 
 //---------------------------------------------------------------------------------------------
 
-int main ()
+int main(int argc, char **argv)
 {
 	int retval;
 	struct fred_sys *fred_sys;
+	enum fred_sys_mode mode;
 
+	// To be removed
 	sched_mode_set_fp(0);
 
-	retval = fred_sys_init(&fred_sys, ARCH_FILE, HW_TASKS);
+	if (argc > 1)
+		mode = FRED_RCFG_TEST_MODE;
+	else
+		mode = FRED_NORMAL_MODE;
+
+	retval = fred_sys_init(&fred_sys, ARCH_FILE, HW_TASKS_FILE, mode);
 	if (retval < 0)
 		return -1;
 

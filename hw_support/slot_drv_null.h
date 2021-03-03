@@ -10,39 +10,28 @@
  * (at your option) any later version.
 */
 
-#ifndef SW_TASKS_LISTENER_H_
-#define SW_TASKS_LISTENER_H_
+#ifndef SLOT_DRV_NULL_H_
+#define SLOT_DRV_NULL_H_
 
-#include <assert.h>
-
-#include "../parameters.h"
-#include "reactor.h"
-#include "../srv_support/buffctl.h"
-#include "scheduler.h"
-
+#include "slot_drv.h"
+#include "uio_drv.h"
 
 //---------------------------------------------------------------------------------------------
 
-struct sw_tasks_listener {
+struct slot_drv_null {
 	// ------------------------//
-	struct event_handler handler; 	// Handler interface
+	struct slot_drv slot_drv;
 	// ------------------------//
 
-	int list_sock;					// Handle
-
-	struct reactor *reactor;		// To add event handler for new client
-
-	struct scheduler *scheduler;	// To be passed to the client
-	struct sys_layout *sys;
-	buffctl_ft *buffctl;
+	// Null driver
+	int out_fd;
+	int in_fd;
 };
 
 //---------------------------------------------------------------------------------------------
 
-int sw_tasks_listener_init(struct event_handler **self, struct sys_layout *sys,
-							struct reactor *reactor, struct scheduler *scheduler,
-							buffctl_ft *buffctl);
+int slot_drv_null_init(struct slot_drv **self, const char *dev_name);
 
 //---------------------------------------------------------------------------------------------
 
-#endif /* SW_TASKS_LISTENER_H_ */
+#endif /* SLOT_DRV_NULL_H_ */

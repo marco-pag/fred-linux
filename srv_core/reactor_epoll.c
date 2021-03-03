@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,6 +35,7 @@
 // Internal event handler wrapper
 struct event_source_ {
 	int active;
+	enum react_handler_ownership ownership;
 	struct event_handler *handler;
 };
 
@@ -53,19 +54,20 @@ struct reactor {
 static
 void free_event_source_(struct reactor *self, struct event_source_ *event_src)
 {
+	int handler_fd;
 	char handler_name[MAX_NAMES];
 
 	// Remove from epoll
-	epoll_ctl(self->ep_fd, EPOLL_CTL_DEL,
-				event_src->handler->get_fd_handle(event_src->handler), NULL);
+	handler_fd = event_handler_get_fd_handle(event_src->handler);
+	epoll_ctl(self->ep_fd, EPOLL_CTL_DEL, handler_fd, NULL);
 
 	// Get handler name for print
-	event_src->handler->get_name(event_src->handler, handler_name, MAX_NAMES);
+	event_handler_get_name(event_src->handler, handler_name, MAX_NAMES);
 
 	DBG_PRINT("fred_sys: epoll reactor: removing event handler %s\n", handler_name);
 
 	// Free the event handler object
-	event_src->handler->free(event_src->handler);
+	event_handler_free(event_src->handler);
 
 	// Clear repository flag
 	event_src->handler = NULL;
@@ -76,8 +78,9 @@ static
 void free_all_events_source_(struct reactor *self)
 {
 	for (int i = 0; i < MAX_EVENTS_SRCS; ++i) {
-		if (self->events_sources[i].active) {
-			free_event_source_(self, &self->events_sources[i]);
+		if (self->events_sources[i].active &&
+			self->events_sources[i].ownership == REACT_OWNED) {
+				free_event_source_(self, &self->events_sources[i]);
 		}
 	}
 }
@@ -85,7 +88,8 @@ void free_all_events_source_(struct reactor *self)
 //--- Reactor interface implementation --------------------------------------------------------
 
 int reactor_add_event_handler(struct reactor *self, struct event_handler *event_handler,
-								int pri_mode)
+								enum react_handler_mode handler_mode,
+								enum react_handler_ownership handler_ownership)
 {
 	int retval;
 	int handler_fd = 0;
@@ -103,19 +107,25 @@ int reactor_add_event_handler(struct reactor *self, struct event_handler *event_
 
 			// Add event source to the event repository
 			self->events_sources[i].handler = event_handler;
+			self->events_sources[i].ownership = handler_ownership;
 			self->events_sources[i].active = 1;
 
 			// Fill the epoll event structure and link the event handler wrapper
-			if (!pri_mode)
-				epoll_event.events = EPOLLIN;
-			else
-				epoll_event.events = EPOLLERR | EPOLLPRI;
+			switch (handler_mode) {
+				case REACT_PRI_HANDLER:
+					epoll_event.events = EPOLLERR | EPOLLPRI;
+					break;
+				case REACT_NORMAL_HANDLER:
+				default:
+					epoll_event.events = EPOLLIN;
+					break;
+			}
 
 			epoll_event.data.ptr = &self->events_sources[i];
 
 			// Get handler name and file descriptor
-			event_handler->get_name(event_handler, handler_name, MAX_NAMES);
-			handler_fd = event_handler->get_fd_handle(event_handler);
+			event_handler_get_name(event_handler, handler_name, MAX_NAMES);
+			handler_fd = event_handler_get_fd_handle(event_handler);
 
 			DBG_PRINT("fred_sys: epoll reactor: adding event handler: %s\n",
 						handler_name);
@@ -172,7 +182,7 @@ void reactor_event_loop(struct reactor *self)
 			assert(event_src);
 
 			// Handle event
-			retval = event_src->handler->handle_event(event_src->handler);
+			retval = event_handler_handle_event(event_src->handler);
 
 			// Single client error -> detach handler
 			if (retval > 0) {

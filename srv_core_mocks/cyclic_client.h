@@ -10,33 +10,29 @@
  * (at your option) any later version.
 */
 
-#ifndef SW_TASK_CLIENT_H_
-#define SW_TASK_CLIENT_H_
+#ifndef CYCLIC_CLIENT_H_
+#define CYCLIC_CLIENT_H_
 
 #include "../parameters.h"
-#include "accel_req.h"
-#include "sys_layout.h"
-#include "hw_task.h"
-#include "../srv_support/buffctl.h"
-#include "scheduler.h"
+#include "../srv_core/accel_req.h"
+#include "../srv_core/sys_layout.h"
+#include "../srv_core/scheduler.h"
+#include "../srv_core/hw_task.h"
 
 //---------------------------------------------------------------------------------------------
 
-struct sw_task_client {
+struct cyclic_sw_tasks_client {
 	// ------------------------//
-	struct event_handler handler; 				// Handler interface
+	struct event_handler handler; 				// Handler (inherits)
 	// ------------------------//
 
-	int conn_sock;								// Handle
-
-	enum sw_task_client_state {
-		CLIENT_EMPTY,
-		CLIENT_READY,
-		CLIENT_BUSY
-	} state;
+	int out_fd;									// Handle (source)
+	int in_fd;
 
 	struct hw_task *hw_tasks[MAX_HW_TASKS];		// Associated hw-tasks
 	int hw_tasks_count;
+
+	int next_hw_task;
 
 	// And data buffers (one set for each hw-task)
 	struct fred_buff_if *data_buffs_ifs[MAX_HW_TASKS][MAX_DATA_BUFFS];
@@ -52,9 +48,9 @@ struct sw_task_client {
 
 //---------------------------------------------------------------------------------------------
 
-int sw_task_client_init(struct event_handler **self, int list_sock, struct sys_layout *sys,
-						struct scheduler *scheduler, buffctl_ft *buffctl);
+int cyclic_sw_tasks_client_init(struct event_handler **self, struct sys_layout *sys,
+								struct scheduler *scheduler, buffctl_ft *buffctl);
 
 //---------------------------------------------------------------------------------------------
 
-#endif /* SW_TASK_CLIENT_H_ */
+#endif /* CYCLIC_CLIENT_H_ */

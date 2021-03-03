@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,38 +13,44 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "../hw_support/sys_hw_config.h"
+#include "../hw_support/slot_drv_null.h"
+#include "../hw_support/slot_drv_master.h"
+#include "../hw_support/decoup_drv_xil.h"
+
 #include "slot.h"
 
 // ---------------------- Functions to implement event_handler interface ----------------------
 
 static
-int get_fd_handle_(void *self)
+int get_fd_handle_(const struct event_handler *self)
 {
 	struct slot *slot;
 
 	assert(self);
 
 	slot = (struct slot *)self;
-	return uio_get_fd(slot->ctrl_dev);
+	return slot_drv_get_fd(slot->slot_dev);
 }
 
 static
-int handle_event_(void *self)
+int handle_event_(struct event_handler *self)
 {
 	struct slot *slot;
+	int retval;
 
 	assert(self);
 
 	slot = (struct slot *)self;
 
 	// Signal the scheduler
-	sched_slot_complete(slot->sched, slot->exec_req);
+	retval = scheduler_slot_complete(slot->scheduler, slot->exec_req);
 
-	return 0;
+	return retval;
 }
 
 static
-void get_name_(void *self, char *msg, int msg_size)
+void get_name_(const struct event_handler *self, char *msg, int msg_size)
 {
 	struct slot *slot;
 
@@ -53,26 +59,38 @@ void get_name_(void *self, char *msg, int msg_size)
 	slot = (struct slot *)self;
 	snprintf(msg, msg_size, "slot device %u on fd: %d",
 			slot->index,
-			uio_get_fd(slot->ctrl_dev));
+			slot_drv_get_fd(slot->slot_dev));
 
 }
 
-// Cannot be deallocated through the handler by the reactor
-// Must be deallocated manually
 static
-void free_(void *self)
+void free_(struct event_handler *self)
 {
-	// Empty
+	struct slot *slot;
+
+	if (!self)
+		return;
+
+	slot = (struct slot *)self;
+
+	if (slot->slot_dev)
+		slot_drv_free(slot->slot_dev);
+
+	if (slot->dec_dev)
+		decoup_drv_free(slot->dec_dev);
+
+	free(slot);
 }
 
 //---------------------------------------------------------------------------------------------
 
-int slot_init(struct slot **self, int index, const char *dev_name,
-				const char *dec_dev_name, struct scheduler *sched)
+int slot_init(struct slot **self, const struct sys_hw_config *hw_config, int index,
+				const char *dev_name, const char *dec_dev_name, struct scheduler *scheduler)
 {
 	int retval;
+	enum sys_slot_type slot_type;
 
-	assert(sched);
+	assert(scheduler);
 	assert(dev_name);
 	assert(dec_dev_name);
 
@@ -86,43 +104,41 @@ int slot_init(struct slot **self, int index, const char *dev_name,
 	// Set slot initial state
 	(*self)->index = index;
 	(*self)->state = SLOT_BLANK;
-	(*self)->sched = sched;
+	(*self)->scheduler = scheduler;
 
 	// Event handler interface
-	(*self)->handler.self = *self;
 	(*self)->handler.handle_event = handle_event_;
 	(*self)->handler.get_fd_handle = get_fd_handle_;
 	(*self)->handler.get_name = get_name_;
 	(*self)->handler.free = free_;
 
-	// Init UIO device driver for slot and decoupler
-	// Names must match device tree names
-	retval = slot_drv_dev_init(&(*self)->ctrl_dev, dev_name);
+	// Initialize slots drivers
+	slot_type = sys_hw_config_get_slot_type(hw_config);
+
+	switch (slot_type) {
+		case SYS_SLOT_MASTER:
+			// UIO device names must match device tree names
+			retval = slot_drv_master_init(&(*self)->slot_dev, dev_name);
+			break;
+		case SYS_SLOT_NULL:
+		default:
+			retval = slot_drv_null_init(&(*self)->slot_dev, dev_name);
+			break;
+	}
+
 	if (retval < 0) {
 		free(*self);
 		return -1;
 	}
 
 	// Decoupler
-	retval = decoup_drv_dev_init(&(*self)->dec_dev, dec_dev_name);
+	// UIO device names must match device tree names
+	retval = decoup_drv_xil_init(&(*self)->dec_dev, dec_dev_name);
 	if (retval < 0) {
-		slot_drv_dev_free((*self)->ctrl_dev);
+		slot_drv_free((*self)->slot_dev);
 		free(*self);
 		return -1;
 	}
 
 	return 0;
-}
-
-void slot_free(struct slot *self)
-{
-	assert(self);
-
-	if (self->ctrl_dev)
-		slot_drv_dev_free(self->ctrl_dev);
-
-	if (self->dec_dev)
-		decoup_drv_dev_free(self->dec_dev);
-
-	free(self);
 }

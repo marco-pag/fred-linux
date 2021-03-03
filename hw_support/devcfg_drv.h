@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,23 +14,60 @@
 #define DEVCFG_DRV_H_
 
 #include <stdint.h>
+#include <assert.h>
 #include "../srv_core/phy_bit.h"
 
 //---------------------------------------------------------------------------------------------
 
-typedef struct devcfg_drv_ devcfg_drv;
+struct devcfg_drv {
+
+	int (*get_fd)(struct devcfg_drv *self);
+
+	int (*start_rcfg)(struct devcfg_drv *self, const struct phy_bit *phy_bit);
+
+	// Should return reconfiguration time
+	uint64_t (*after_rcfg)(struct devcfg_drv *self);
+
+	void (*free)(struct devcfg_drv *self);
+};
 
 //---------------------------------------------------------------------------------------------
 
-int devcfg_drv_init(devcfg_drv **self);
+//int devcfg_drv_init(devcfg_drv **self);
 
-void devcfg_drv_free(devcfg_drv *devcfg);
+//void devcfg_drv_free(devcfg_drv *devcfg);
 
-int devcfg_drv_get_fd(const devcfg_drv *devcfg);
+static inline
+int devcfg_drv_get_fd(struct devcfg_drv *self)
+{
+	assert(self);
 
-int devcfg_drv_start_prog(const devcfg_drv *devcfg, const struct phy_bit *phy_bit);
+	return self->get_fd(self);
+}
 
-int64_t devcfg_drv_clear_evt(devcfg_drv *devcfg);
+static inline
+int devcfg_drv_start_rcfg(struct devcfg_drv *self, const struct phy_bit *phy_bit)
+{
+	assert(self);
+
+	return self->start_rcfg(self, phy_bit);
+}
+
+static inline
+uint64_t devcfg_drv_after_rcfg(struct devcfg_drv *self)
+{
+	assert(self);
+
+	return self->after_rcfg(self);
+}
+
+static inline
+void devcfg_drv_free(struct devcfg_drv *self)
+{
+	assert(self);
+
+	self->free(self);
+}
 
 //---------------------------------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,27 +19,15 @@
 
 struct signals_recv {
 	// ------------------------//
-	struct event_handler handler;	// Handler (inherits)
+	struct event_handler handler;	// Handler interface
 	// ------------------------//
 
-	int fd;							// Handle (source)
+	int fd;							// Handle
 };
 
 //---------------------------------------------------------------------------------------------
 
-static inline
-struct event_handler *signals_recv_get_event_handler(struct signals_recv *self)
-{
-	assert(self);
-
-	return &self->handler;
-}
-
-//---------------------------------------------------------------------------------------------
-
-int signals_recv_init(struct signals_recv **self);
-
-void signals_recv_free(struct signals_recv *self);
+int signals_recv_init(struct event_handler **self);
 
 //---------------------------------------------------------------------------------------------
 

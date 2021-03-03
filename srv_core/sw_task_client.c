@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,14 +18,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
 #include "sw_task_client.h"
+#include "../utils/dbg_print.h"
 #include "../shared_user/fred_msg.h"
 #include "../shared_user/user_buff.h"
+#include "../utils/fd_utils.h"
 #include "../utils/dbg_print.h"
 
 //---------------------------------------------------------------------------------------------
@@ -62,31 +63,6 @@ void free_all_data_buff_(struct sw_task_client *self)
 				buffctl_free_buff(self->buffctl, self->data_buffs_ifs[i][j]);
 		}
 	}
-}
-
-static inline
-int set_fd_nonblock_(int fd)
-{
-	int flags;
-	int retval;
-
-	if (fd < 0)
-		return -1;
-
-	flags = fcntl(fd, F_GETFL, 0);
-	if (flags < 0) {
-		ERROR_PRINT("fred_sys: error on fcntl get flags\n");
-		return -1;
-	}
-
-	flags |= O_NONBLOCK;
-	retval = fcntl(fd, F_SETFL, flags);
-	if (retval < 0) {
-		ERROR_PRINT("fred_sys: error on fcntl set flags\n");
-		return -1;
-	}
-
-	return 0;
 }
 
 static inline
@@ -256,7 +232,7 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 					fred_buff_if_get_phy_addr(self->data_buffs_ifs[idx][j]));
 			}
 			// Pass acceleration request to the scheduler
-			retval = sched_push_accel_req(self->sched, &self->accel_req);
+			retval = scheduler_push_accel_req(self->scheduler, &self->accel_req);
 		}
 		break;
 
@@ -280,10 +256,25 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 	}
 }
 
+//---------------------------------------------------------------------------------------------
+
+static
+int sw_task_client_notify_action_(void *notifier)
+{
+	struct sw_task_client *self;
+
+	assert(notifier);
+
+	self = (struct sw_task_client *)notifier;
+
+	// Notify the client that his acceleration request has been completed
+	return send_fred_message_(self->conn_sock, FRED_MSG_DONE, 0);
+}
+
 // ---------------------- Functions to implement event_handler interface ----------------------
 
 static
-int get_fd_handle_(void *self)
+int get_fd_handle_(const struct event_handler *self)
 {
 	struct sw_task_client *cp;
 
@@ -294,7 +285,7 @@ int get_fd_handle_(void *self)
 }
 
 static
-void get_name_(void *self, char *msg, int msg_size)
+void get_name_(const struct event_handler *self, char *msg, int msg_size)
 {
 	struct sw_task_client *cp;
 
@@ -306,22 +297,7 @@ void get_name_(void *self, char *msg, int msg_size)
 }
 
 static
-void free_(void *self)
-{
-	struct sw_task_client *cp;
-
-	assert(self);
-
-	cp = (struct sw_task_client *)self;
-
-	free_all_data_buff_(cp);
-
-	close(cp->conn_sock);
-	free(cp);
-}
-
-static
-int handle_event_(void *self)
+int handle_event_(struct event_handler *self)
 {
 	struct sw_task_client *cp;
 
@@ -346,68 +322,77 @@ int handle_event_(void *self)
 	return process_msg_(cp, &msg);
 }
 
+static
+void free_(struct event_handler *self)
+{
+	struct sw_task_client *cp;
+
+	assert(self);
+
+	cp = (struct sw_task_client *)self;
+
+	free_all_data_buff_(cp);
+
+	close(cp->conn_sock);
+	free(cp);
+}
+
 //---------------------------------------------------------------------------------------------
 
 
-int sw_task_client_init(struct sw_task_client **self, int list_sock, struct sys_layout *sys,
-						struct scheduler *sched, buffctl_ft *buffctl)
+int sw_task_client_init(struct event_handler **self, int list_sock, struct sys_layout *sys,
+						struct scheduler *scheduler, buffctl_ft *buffctl)
 {
+	struct sw_task_client *client;
 	int retval;
 	struct sockaddr_un cli_addr;
-	size_t cli_addr_len;
+	socklen_t cli_addr_len;
 
 	assert(sys);
-	assert(sched);
+	assert(scheduler);
 	assert(buffctl);
 
-	// Store the size of client addr struct
-	cli_addr_len = sizeof(cli_addr);
+	*self = NULL;
 
 	// Allocate and set everything to 0
-	*self = calloc(1, sizeof(**self));
-	if (!(*self))
+	client = calloc(1, sizeof (*client));
+	if (!client)
 		return -1;
 
-	event_handler_assign_id(&(*self)->handler);
+	event_handler_assign_id(&client->handler);
 
 	// Accept connection, the event handler will be registered
 	// to the reactor by the server
-	(*self)->conn_sock = accept(list_sock, (struct sockaddr *)&cli_addr, &cli_addr_len);
-	if ((*self)->conn_sock < 0) {
+	cli_addr_len = sizeof(cli_addr);
+	client->conn_sock = accept(list_sock, (struct sockaddr *)&cli_addr, &cli_addr_len);
+	if (client->conn_sock < 0) {
 		ERROR_PRINT("fred_sys: error on connect: %s\n", strerror(errno));
-		free(*self);
+		free(client);
 		return -1;
 	}
 
-	retval = set_fd_nonblock_((*self)->conn_sock);
+	retval = fd_utils_set_fd_nonblock(client->conn_sock);
 	if (retval) {
-		free(*self);
+		free(client);
 		return -1;
 	}
 
 	// Set properties and methods
-	(*self)->sched = sched;
-	(*self)->sys = sys;
-	(*self)->buffctl = buffctl;
-	(*self)->state = CLIENT_EMPTY;
+	client->sys = sys;
+	client->scheduler = scheduler;
+	client->buffctl = buffctl;
+	client->state = CLIENT_EMPTY;
 
 	// Event handler interface
-	(*self)->handler.self = *self;
-	(*self)->handler.handle_event = handle_event_;
-	(*self)->handler.get_fd_handle = get_fd_handle_;
-	(*self)->handler.get_name = get_name_;
-	(*self)->handler.free = free_;
+	client->handler.handle_event = handle_event_;
+	client->handler.get_fd_handle = get_fd_handle_;
+	client->handler.get_name = get_name_;
+	client->handler.free = free_;
 
-	// Link child to parent
-	accel_req_set_sw_task_client(&(*self)->accel_req, (*self));
+	// Link notify action
+	accel_req_set_notifier(&client->accel_req, sw_task_client_notify_action_, client);
+
+	*self = &client->handler;
 
 	return 0;
-}
-
-int sw_task_client_notify_action(struct sw_task_client *self)
-{
-	assert(self);
-
-	// Notify the client that his acceleration request has been completed
-	return send_fred_message_(self->conn_sock, FRED_MSG_DONE, 0);
 }

@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -217,7 +217,7 @@ int hw_task_init(struct hw_task **self, uint32_t hw_id, const char *name,
 					xdev_length);
 
 
-		DBG_PRINT("fred_sys: loaded slot %u bitstream for hw-task %s, size: %u\n",
+		DBG_PRINT("fred_sys: loaded slot %u bitstream for hw-task %s, size: %zu\n",
 				i, (*self)->name, phy_bit_get_size(&(*self)->bits_phys[i]));
 
 	}

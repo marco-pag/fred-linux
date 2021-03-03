@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,16 +13,47 @@
 #ifndef DECOUP_DRV_H_
 #define DECOUP_DRV_H_
 
-#include "uio_drv.h"
+#include <assert.h>
 
-#define decoup_drv_dev_init(uio_dev, dev_name) \
-		uio_dev_init(uio_dev, dev_name)
+//---------------------------------------------------------------------------------------------
 
-#define	decoup_drv_dev_free(uio_dev) \
-		uio_dev_free(uio_dev)
+struct decoup_drv {
 
-void decoup_drv_decouple(uio_dev_ft *uio_dev);
+	void (*decouple)(struct decoup_drv *self);
 
-void decoup_drv_couple(uio_dev_ft *uio_dev);
+	void (*couple)(struct decoup_drv *self);
+
+	void (*free)(struct decoup_drv *self);
+};
+
+
+//---------------------------------------------------------------------------------------------
+
+static inline
+void decoup_drv_decouple(struct decoup_drv *self)
+{
+	assert(self);
+
+	self->decouple(self);
+}
+
+static inline
+void decoup_drv_couple(struct decoup_drv *self)
+{
+	assert(self);
+
+	self->couple(self);
+}
+
+static inline
+void decoup_drv_free(struct decoup_drv *self)
+{
+	assert(self);
+
+	self->free(self);
+}
+
+//---------------------------------------------------------------------------------------------
+
 
 #endif /* DECOUP_DRV_H_ */

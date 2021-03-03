@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 // ---------------------- Functions to implement event_handler interface ----------------------
 
 static
-int get_fd_handle_(void *self)
+int get_fd_handle_(const struct event_handler *self)
 {
 	struct sw_tasks_listener *sp;
 
@@ -38,10 +38,11 @@ int get_fd_handle_(void *self)
 }
 
 static
-int handle_event_(void *self)
+int handle_event_(struct event_handler *self)
 {
 	struct sw_tasks_listener *lp;
-	struct sw_task_client *cp;
+	struct event_handler *cp;
+	int retval;
 
 	assert(self);
 
@@ -49,16 +50,16 @@ int handle_event_(void *self)
 
 	// New connection request from a SW task
 	// Create a sw_task_client object
-	sw_task_client_init(&cp, lp->list_sock, lp->sys, lp->sched, lp->buffctl);
+	sw_task_client_init(&cp, lp->list_sock, lp->sys, lp->scheduler, lp->buffctl);
 
 	// And register to the reactor
-	reactor_add_event_handler(lp->reactor, sw_task_client_get_event_handler(cp), 0);
+	retval = reactor_add_event_handler(lp->reactor, cp, REACT_NORMAL_HANDLER, REACT_OWNED);
 
-	return 0;
+	return retval;
 }
 
 static
-void get_name_(void *self, char *msg, int msg_size)
+void get_name_(const struct event_handler *self, char *msg, int msg_size)
 {
 	struct sw_tasks_listener *sp;
 
@@ -73,9 +74,17 @@ void get_name_(void *self, char *msg, int msg_size)
 // Cannot be deallocated through the handler by the reactor
 // Must be deallocated manually
 static
-void free_(void *self)
+void free_(struct event_handler *self)
 {
-	// Empty
+	struct sw_tasks_listener *sp;
+
+	if (!self)
+		return;
+
+	sp = (struct sw_tasks_listener *)self;
+
+	close(sp->list_sock);
+	free(sp);
 }
 
 //---------------------------------------------------------------------------------------------
@@ -122,52 +131,48 @@ int open_listening_socket_()
 
 //---------------------------------------------------------------------------------------------
 
-int sw_tasks_listener_init(struct sw_tasks_listener **self,
-							struct sys_layout *sys, struct reactor *reactor,
-							struct scheduler *sched, buffctl_ft *buffctl)
+int sw_tasks_listener_init(struct event_handler **self, struct sys_layout *sys,
+							struct reactor *reactor, struct scheduler *scheduler,
+							buffctl_ft *buffctl)
 {
+	struct sw_tasks_listener *listener;
+
 	assert(sys);
 	assert(reactor);
-	assert(sched);
+	assert(scheduler);
 	assert(buffctl);
 
-	*self = calloc(1, sizeof(**self));
-	if (!(*self))
+	*self = NULL;
+
+	listener = calloc(1, sizeof(*listener));
+	if (!listener)
 		return -1;
 
-	event_handler_assign_id(&(*self)->handler);
+	event_handler_assign_id(&listener->handler);
 
 	// Open socket
-	(*self)->list_sock = open_listening_socket_();
-	if ((*self)->list_sock < 0) {
+	listener->list_sock = open_listening_socket_();
+	if (listener->list_sock < 0) {
 		ERROR_PRINT("fredsys: software tasks listener: unable to open listening socket\n");
-		free(*self);
+		free(listener);
 		return -1;
 	}
 
 	// Set properties and methods
-	(*self)->sys = sys;
-	(*self)->reactor = reactor;
-	(*self)->sched = sched;
-	(*self)->buffctl = buffctl;
+	listener->sys = sys;
+	listener->reactor = reactor;
+	listener->scheduler = scheduler;
+	listener->buffctl = buffctl;
 
 	// Event handler interface
-	(*self)->handler.self = *self;
-	(*self)->handler.handle_event = handle_event_;
-	(*self)->handler.get_fd_handle = get_fd_handle_;
-	(*self)->handler.get_name = get_name_;
-	(*self)->handler.free = free_;
+	listener->handler.handle_event = handle_event_;
+	listener->handler.get_fd_handle = get_fd_handle_;
+	listener->handler.get_name = get_name_;
+	listener->handler.free = free_;
+
+	*self = &listener->handler;
 
 	return 0;
-}
-
-void sw_tasks_listener_free(struct sw_tasks_listener *self)
-{
-	if (!self)
-		return;
-
-	close(self->list_sock);
-	free(self);
 }
 
 //---------------------------------------------------------------------------------------------

@@ -10,39 +10,41 @@
  * (at your option) any later version.
 */
 
-#ifndef SW_TASKS_LISTENER_H_
-#define SW_TASKS_LISTENER_H_
+#ifndef SCHEDULER_TEST_RCFG_H_
+#define SCHEDULER_TEST_RCFG_H_
 
-#include <assert.h>
+#include <sys/queue.h>
 
 #include "../parameters.h"
-#include "reactor.h"
-#include "../srv_support/buffctl.h"
-#include "scheduler.h"
-
+#include "../srv_core/accel_req.h"
+#include "../srv_core/devcfg.h"
+#include "../srv_core/scheduler.h"
 
 //---------------------------------------------------------------------------------------------
 
-struct sw_tasks_listener {
+struct scheduler_test_rcfg {
 	// ------------------------//
-	struct event_handler handler; 	// Handler interface
+	struct scheduler scheduler;
 	// ------------------------//
 
-	int list_sock;					// Handle
+	// Partitions queues heads
+	struct accel_req_queue part_queues_heads[MAX_PARTITIONS];
 
-	struct reactor *reactor;		// To add event handler for new client
+	// Reconfiguration device queue
+	// Partition queue head
+	struct accel_req_queue fri_queue_head;
 
-	struct scheduler *scheduler;	// To be passed to the client
-	struct sys_layout *sys;
-	buffctl_ft *buffctl;
+	int serving;
+
+	// Reconfiguration device
+	struct devcfg *devcfg;
 };
 
-//---------------------------------------------------------------------------------------------
-
-int sw_tasks_listener_init(struct event_handler **self, struct sys_layout *sys,
-							struct reactor *reactor, struct scheduler *scheduler,
-							buffctl_ft *buffctl);
 
 //---------------------------------------------------------------------------------------------
 
-#endif /* SW_TASKS_LISTENER_H_ */
+int sched_test_rcfg_init(struct scheduler **self, struct devcfg *devcfg);
+
+//---------------------------------------------------------------------------------------------
+
+#endif /* SCHEDULER_TEST_RCFG_H_ */

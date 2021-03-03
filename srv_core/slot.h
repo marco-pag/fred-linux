@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,12 +18,14 @@
 #include <time.h>
 
 #include "event_handler.h"
-#include "scheduler.h"
 #include "accel_req.h"
 #include "hw_task.h"
+#include "scheduler.h"
 
-#include "../hw_support/slot_drv.h"
+#include "../hw_support/sys_hw_config.h"
 #include "../hw_support/decoup_drv.h"
+#include "../hw_support/slot_drv.h"
+
 
 //---------------------------------------------------------------------------------------------
 //
@@ -37,28 +39,28 @@
 
 struct slot {
 	// ------------------------//
-	struct event_handler handler;	 // Handler (inherits)
+	struct event_handler handler;	 // Handler interface
 	// ------------------------//
 
 	// Each slot contains ad accelerator
 	// (from which one can get the handle for event_source)
 	// and it's paired with a decoupler
-	uio_dev_ft *ctrl_dev;			// Handle (source)
-	uio_dev_ft *dec_dev;
+	struct slot_drv *slot_dev;		// Handle
+	struct decoup_drv *dec_dev;
 
 	enum slot_state {
-		SLOT_BLANK,		// Not configured
-		SLOT_RSRV,		// Reserved to an hw-task instance
-		SLOT_RCFG,		// Under reconfiguration
-		SLOT_READY,		// Ready (re-enabled) after reconfiguration
-		SLOT_EXEC,		// Executing
-		SLOT_IDLE		// Idle (configured with an hw-task)
+		SLOT_BLANK,					// Not configured
+		SLOT_RSRV,					// Reserved to an hw-task instance
+		SLOT_RCFG,					// Under reconfiguration
+		SLOT_READY,					// Ready (re-enabled) after reconfiguration
+		SLOT_EXEC,					// Executing
+		SLOT_IDLE					// Idle (configured with an hw-task)
 	} state;
 
 	int index;
 
 	// Fred scheduler
-	struct scheduler *sched;
+	struct scheduler *scheduler;
 
 	// Holds the request associated to the
 	// current executing hw-task
@@ -138,7 +140,7 @@ int slot_check_hw_task_consistency(const struct slot *self)
 {
 	assert(self);
 
-	return slot_drv_get_id(self->ctrl_dev) == hw_task_get_id(self->hw_task);
+	return slot_drv_get_id(self->slot_dev) == hw_task_get_id(self->hw_task);
 }
 
 //---------------------------------------------------------------------------------------------
@@ -170,7 +172,7 @@ void slot_reinit_after_rcfg(struct slot *self)
 
 	self->state = SLOT_READY;
 	decoup_drv_couple(self->dec_dev);
-	slot_drv_enable_irq(self->ctrl_dev);
+	slot_drv_after_rcfg(self->slot_dev);
 }
 
 static inline
@@ -192,7 +194,7 @@ int slot_start_compute(struct slot *self, struct accel_req *exec_req)
 	self->t_begin = ts_start.tv_sec * 1000000 + ts_start.tv_nsec / 1000;
 
 	// And start
-	retval = slot_drv_start_compute(self->ctrl_dev,
+	retval = slot_drv_start_compute(self->slot_dev,
 									accel_req_get_args(exec_req),
 									accel_req_get_args_size(exec_req));
 
@@ -205,22 +207,14 @@ void slot_clear_after_compute(struct slot *self)
 	assert(self);
 	assert(self->state == SLOT_EXEC);
 
-	// Consume the UIO event
-	slot_drv_read_for_irq(self->ctrl_dev);
-
-	// Interrupt received, clear device register
-	slot_drv_clear_int(self->ctrl_dev);
-	// Re-enable interrupt at the controller level
-	slot_drv_clear_gic(self->ctrl_dev);
+	slot_drv_after_compute(self->slot_dev);
 
 	self->state = SLOT_IDLE;
 }
 
 //---------------------------------------------------------------------------------------------
 
-int slot_init(struct slot **self, int index, const char *dev_name,
-				const char *dec_dev_name, struct scheduler *sched);
-
-void slot_free(struct slot *self);
+int slot_init(struct slot **self, const struct sys_hw_config *hw_config, int index,
+				const char *dev_name, const char *dec_dev_name, struct scheduler *scheduler);
 
 #endif /* SLOT_H_ */

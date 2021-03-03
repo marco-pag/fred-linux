@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -12,30 +12,26 @@
 
 #include <stdlib.h>
 
-#include "scheduler.h"
 #include "slot.h"
 #include "../utils/logger.h"
 #include "../utils/dbg_print.h"
-
-//---------------------------------------------------------------------------------------------
-
-//#define RCFG_CHECK
-
-//---------------------------------------------------------------------------------------------
-
-static inline
-int start_slot_after_rcfg_(struct scheduler *self, struct accel_req *request_done);
-
-static inline
-int start_rcfg_(struct scheduler *self, struct accel_req *request);
-
-static inline
-int push_req_fri_queue_(struct scheduler *self, struct accel_req *request);
+#include "scheduler_fred.h"
 
 //---------------------------------------------------------------------------------------------
 
 static inline
-int start_slot_after_rcfg_(struct scheduler *self, struct accel_req *request_done)
+int start_slot_after_rcfg_(struct scheduler_fred *self, struct accel_req *request_done);
+
+static inline
+int start_rcfg_(struct scheduler_fred *self, struct accel_req *request);
+
+static inline
+int push_req_fri_queue_(struct scheduler_fred *self, struct accel_req *request);
+
+//---------------------------------------------------------------------------------------------
+
+static inline
+int start_slot_after_rcfg_(struct scheduler_fred *self, struct accel_req *request_done)
 {
 	int retval;
 	struct slot *slot;
@@ -78,7 +74,7 @@ int start_slot_after_rcfg_(struct scheduler *self, struct accel_req *request_don
 
 
 static inline
-int start_rcfg_(struct scheduler *self, struct accel_req *request)
+int start_rcfg_(struct scheduler_fred *self, struct accel_req *request)
 {
 	int retval;
 
@@ -136,7 +132,7 @@ void ins_req_ordered_(struct accel_req_queue *queue_head, struct accel_req *new_
 
 //TODO: integrate the function above to avoid insert and remove
 static inline
-int push_req_fri_queue_(struct scheduler *self, struct accel_req *request)
+int push_req_fri_queue_(struct scheduler_fred *self, struct accel_req *request)
 {
 	// Insert the request directly into FRI queue
 	ins_req_ordered_(&self->fri_queue_head, request);
@@ -158,46 +154,23 @@ int push_req_fri_queue_(struct scheduler *self, struct accel_req *request)
 	return 0;
 }
 
-//---------------------------------------------------------------------------------------------
-
-int sched_init(struct scheduler **self, struct devcfg *devcfg)
-{
-	assert(devcfg);
-
-	// Allocate and set everything to 0
-	*self = calloc(1, sizeof(**self));
-	if (!(*self))
-		return -1;
-
-	(*self)->devcfg = devcfg;
-
-	// Initialize partition queues heads
-	for (int i = 0; i < MAX_PARTITIONS; ++i)
-		TAILQ_INIT(&((*self)->part_queues_heads[i]));
-
-	// And fri queue head
-	TAILQ_INIT(&(*self)->fri_queue_head);
-
-	return 0 ;
-}
-
-void sched_free(struct scheduler *self)
-{
-	if(self)
-		free(self);
-}
+// ------------------------ Functions to implement scheduler interface ------------------------
 
 // Acceleration request from software tasks
-int sched_push_accel_req(struct scheduler *self, struct accel_req *request)
+static
+int sched_fred_push_accel_req_(struct scheduler *self, struct accel_req *request)
 {
 	int retval;
 	int rcfg;
+	struct scheduler_fred *sched;
 	struct hw_task *hw_task;
 	struct slot *slot;
 	struct partition *partition;
 
 	assert(self);
 	assert(request);
+
+	sched = (struct scheduler_fred *)self;
 
 	// Set request's time stamp
 	accel_req_stamp_timestamp(request);
@@ -215,7 +188,7 @@ int sched_push_accel_req(struct scheduler *self, struct accel_req *request)
 								partition_get_name(partition));
 
 		// Insert the new request into the partition FIFO queue
-		TAILQ_INSERT_TAIL(&self->part_queues_heads[partition_get_index(partition)],
+		TAILQ_INSERT_TAIL(&sched->part_queues_heads[partition_get_index(partition)],
 							request, queue_elem);
 
 		retval = 0;
@@ -238,27 +211,31 @@ int sched_push_accel_req(struct scheduler *self, struct accel_req *request)
 
 		// Push request into FRI queue. If request goes on top of FRI queue
 		// and devcfg is idle start reconfiguration immediately
-		retval = push_req_fri_queue_(self, request);
+		retval = push_req_fri_queue_(sched, request);
 	}
 
 	return retval;
 }
 
 // Reconfiguration done
-int sched_rcfg_complete(struct scheduler *self, struct accel_req *request_done)
+static
+int sched_fred_rcfg_complete_(struct scheduler *self, struct accel_req *request_done)
 {
+	struct scheduler_fred *sched;
 	struct slot *slot;
 	int rcfg_time_us;
 
 	assert(self);
 	assert(request_done);
 
+	sched = (struct scheduler_fred *)self;
+
 	// Get the slot that has been reconfigured
 	slot = accel_req_get_slot(request_done);
 	assert(slot);
 
 	// Clear devcfg event
-	rcfg_time_us = (int)devcfg_clear_evt(self->devcfg);
+	rcfg_time_us = (int)devcfg_clear_evt(sched->devcfg);
 	if (rcfg_time_us <= 0)
 		return -1;
 
@@ -288,13 +265,15 @@ int sched_rcfg_complete(struct scheduler *self, struct accel_req *request_done)
 #endif
 
 	// Start the hardware accelerator
-	return start_slot_after_rcfg_(self, request_done);
+	return start_slot_after_rcfg_(sched, request_done);
 }
 
 // Hardware task execution completed
-int sched_slot_complete(struct scheduler *self, struct accel_req *request_done)
+static
+int sched_fred_slot_complete_(struct scheduler *self, struct accel_req *request_done)
 {
 	int retval;
+	struct scheduler_fred *sched;
 	struct slot *slot;
 	struct partition *partition;
 	struct accel_req *request;
@@ -302,6 +281,8 @@ int sched_slot_complete(struct scheduler *self, struct accel_req *request_done)
 
 	assert(self);
 	assert(request_done);
+
+	sched = (struct scheduler_fred *)self;
 
 	slot = accel_req_get_slot(request_done);
 	assert(slot);
@@ -318,13 +299,13 @@ int sched_slot_complete(struct scheduler *self, struct accel_req *request_done)
 	// Clear slot device
 	slot_clear_after_compute(slot);
 
-	// Notify the client
+	// Notify the client through the notify action callback
 	retval = accel_req_notify_action(request_done);
 	if (retval)
 		return retval;
 
 	// Check if there are pending requests in the partition queue (queue not empty)
-	part_queue_head = &self->part_queues_heads[partition_get_index(partition)];
+	part_queue_head = &sched->part_queues_heads[partition_get_index(partition)];
 	if (!TAILQ_EMPTY(part_queue_head)) {
 
 		// Get the head request from the partition FIFO queue
@@ -339,8 +320,55 @@ int sched_slot_complete(struct scheduler *self, struct accel_req *request_done)
 
 		// Push request into FRI queue. If request goes on top of FRI queue
 		// and devcfg is idle start reconfiguration immediately
-		retval = push_req_fri_queue_(self, request);
+		retval = push_req_fri_queue_(sched, request);
 	}
 
 	return retval;
+}
+
+static
+void sched_fred_free_(struct scheduler *self)
+{
+	struct scheduler_fred *sched;
+
+	sched = (struct scheduler_fred *)self;
+
+	if(sched)
+		free(sched);
+}
+
+//---------------------------------------------------------------------------------------------
+
+int sched_fred_init(struct scheduler **self, struct devcfg *devcfg)
+{
+	struct scheduler_fred *sched;
+
+	assert(devcfg);
+
+	*self = NULL;
+
+	// Allocate and set everything to 0
+	sched = calloc(1, sizeof(*sched));
+	if (!sched)
+		return -1;
+
+	// Set properties and methods
+	sched->devcfg = devcfg;
+
+	// Scheduler interface
+	sched->scheduler.push_accel_req = sched_fred_push_accel_req_;
+	sched->scheduler.rcfg_complete = sched_fred_rcfg_complete_;
+	sched->scheduler.slot_complete = sched_fred_slot_complete_;
+	sched->scheduler.free = sched_fred_free_;
+
+	// Initialize partition queues heads
+	for (int i = 0; i < MAX_PARTITIONS; ++i)
+		TAILQ_INIT(&(sched->part_queues_heads[i]));
+
+	// And fri queue head
+	TAILQ_INIT(&sched->fri_queue_head);
+
+	*self = &sched->scheduler;
+
+	return 0;
 }

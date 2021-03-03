@@ -1,7 +1,7 @@
 /*
  * Fred for Linux. Experimental support.
  *
- * Copyright (C) 2018, Marco Pagani, ReTiS Lab.
+ * Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
  * <marco.pag(at)outlook.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,23 +15,40 @@
 
 #include <stdint.h>
 
-//---------------------------------------------------------------------------------------------
-
-typedef struct uio_dev_ uio_dev_ft;
+#include "../parameters.h"
 
 //---------------------------------------------------------------------------------------------
 
-int uio_dev_init(uio_dev_ft **uio_dev, const char* dev_name);
+// Simple -single map- UIO device
+struct uio_dev {
+	// Device tree name and UIO number
+	// UIO name: (uio<num>)
+	uint32_t uio_num;
+	char dt_name[MAX_NAMES];
 
-void uio_dev_free(uio_dev_ft *uio_dev);
+	// Device registers
+	uintptr_t regs_addr;
+	size_t regs_size;
 
-int uio_get_fd(const uio_dev_ft *uio_dev);
+	// UIO device fd (when opened)
+	int uio_fd;
+	// Base address when mapped into process space
+	uintptr_t map_base;
+};
 
-uintptr_t uio_get_base_addr(const uio_dev_ft *uio_dev);
+//---------------------------------------------------------------------------------------------
 
-int uio_read_for_irq(uio_dev_ft *uio_dev);
+int uio_dev_init(struct uio_dev **uio_dev, const char* dev_name);
 
-void uio_clear_gic(uio_dev_ft *uio_dev);
+void uio_dev_free(struct uio_dev *uio_dev);
+
+int uio_get_fd(const struct uio_dev *uio_dev);
+
+uintptr_t uio_get_base_addr(const struct uio_dev *uio_dev);
+
+int uio_read_for_irq(struct uio_dev *uio_dev);
+
+void uio_clear_gic(struct uio_dev *uio_dev);
 
 //---------------------------------------------------------------------------------------------
 

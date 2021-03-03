@@ -10,39 +10,27 @@
  * (at your option) any later version.
 */
 
-#ifndef SW_TASKS_LISTENER_H_
-#define SW_TASKS_LISTENER_H_
+#ifndef DECOUP_DRV_XIL_H_
+#define DECOUP_DRV_XIL_H_
 
-#include <assert.h>
-
-#include "../parameters.h"
-#include "reactor.h"
-#include "../srv_support/buffctl.h"
-#include "scheduler.h"
-
+#include "decoup_drv.h"
 
 //---------------------------------------------------------------------------------------------
 
-struct sw_tasks_listener {
+struct decoup_drv_xil {
 	// ------------------------//
-	struct event_handler handler; 	// Handler interface
+	struct decoup_drv decoup_drv;
 	// ------------------------//
 
-	int list_sock;					// Handle
-
-	struct reactor *reactor;		// To add event handler for new client
-
-	struct scheduler *scheduler;	// To be passed to the client
-	struct sys_layout *sys;
-	buffctl_ft *buffctl;
+	// Driver UIO component
+	struct uio_dev *uio_dev;
 };
 
 //---------------------------------------------------------------------------------------------
 
-int sw_tasks_listener_init(struct event_handler **self, struct sys_layout *sys,
-							struct reactor *reactor, struct scheduler *scheduler,
-							buffctl_ft *buffctl);
+int decoup_drv_xil_init(struct decoup_drv **self, const char *dev_name);
 
 //---------------------------------------------------------------------------------------------
 
-#endif /* SW_TASKS_LISTENER_H_ */
+
+#endif /* DECOUP_DRV_XIL_H_ */
