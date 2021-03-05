@@ -19,14 +19,12 @@
 #include "sw_tasks_listener.h"
 #include "devcfg.h"
 #include "scheduler_fred.h"
+#include "../srv_core_mocks/scheduler_fred_rand.h"
 #include "signals_recv.h"
 #include "../srv_support/buffctl.h"
 #include "../utils/logger.h"
 #include "../utils/dbg_print.h"
-
 #include "../srv_core_mocks/cyclic_client.h"
-#include "../srv_core_mocks/scheduler_test_rcfg.h"
-
 #include "../hw_support/sys_hw_config.h"
 
 #include "fred_sys.h"
@@ -160,7 +158,7 @@ int init_normal_mode_(struct fred_sys *self, const char *arch_file, const char *
 	}
 
 	// Initialize scheduler
-	retval = sched_fred_init(&self->scheduler, self->devcfg);
+	retval = sched_fred_init(&self->scheduler, SCHED_FRED_NORMAL, self->devcfg);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while initializing scheduler\n");
 		goto sched_init_error;
@@ -261,7 +259,108 @@ int init_rcfg_test_mode_(struct fred_sys *self, const char *arch_file,
 	}
 
 	// Initialize scheduler
-	retval = sched_fred_init(&self->scheduler, self->devcfg);
+	retval = sched_fred_rand_init(&self->scheduler, self->devcfg);
+	if (retval) {
+		ERROR_PRINT("fred_sys: error while initializing scheduler\n");
+		goto sched_init_error;
+	}
+
+	// Link scheduler to devcfg
+	devcfg_attach_scheduler(self->devcfg, self->scheduler);
+
+	// Initialize base system
+	retval = init_base_sys_(self, arch_file, hw_tasks_file);
+	if (retval)
+		goto base_sys_init_error;
+
+	// Create a cyclic client
+	retval = cyclic_sw_tasks_client_init(&cyclic_client, self->layout,
+										self->scheduler, self->buffctl);
+	if (retval) {
+		ERROR_PRINT("fred_sys: error while initializing cyclic client\n");
+		goto cyclic_client_init_error;
+	}
+
+	// Open file descriptor based signal handler
+	retval = signals_recv_init(&signals_receiver);
+	if (retval) {
+		ERROR_PRINT("fred_sys: error while initializing fd for receiving signals\n");
+		goto signals_recv_init_error;
+	}
+
+	// Register file-based signal handler
+	retval = reactor_add_event_handler(self->reactor, signals_receiver,
+										REACT_NORMAL_HANDLER, REACT_OWNED);
+	if (retval) {
+		ERROR_PRINT("fred_sys: error while registering signals handler\n");
+		goto handlers_reg_error;
+	}
+
+	// Register reconfiguration device event handler
+	retval = reactor_add_event_handler(self->reactor, devcfg_get_event_handler(self->devcfg),
+										REACT_PRI_HANDLER, REACT_NOT_OWNED);
+	if (retval) {
+		ERROR_PRINT("fred_sys: error while registering reconfiguration device handler\n");
+		goto handlers_reg_error;
+	}
+
+	// Register all slots of all partitions to the reactor
+	retval = sys_layout_register_slots(self->layout, self->reactor);
+	if (retval) {
+		ERROR_PRINT("fred_sys: error while registering slots handler\n");
+		goto handlers_reg_error;
+	}
+
+	// Register cyclic client
+	retval = reactor_add_event_handler(self->reactor, cyclic_client,
+										REACT_NORMAL_HANDLER, REACT_OWNED);
+	if (retval) {
+		ERROR_PRINT("fred_sys: error while registering sw-task listener handler\n");
+		goto handlers_reg_error;
+	}
+
+	retval = 0;
+	goto out;
+
+handlers_reg_error:
+signals_recv_init_error:
+	event_handler_free(cyclic_client);
+cyclic_client_init_error:
+	free_base_sys_(self);
+base_sys_init_error:
+	// The reactor will automatically free all registered event handlers
+	scheduler_free(self->scheduler);
+sched_init_error:
+	event_handler_free(devcfg_get_event_handler(self->devcfg));
+devcfg_init_error:
+	retval = -1;
+out:
+	return retval;
+}
+
+//---------------------------------------------------------------------------------------------
+
+int init_hw_tasks_test_mode_(struct fred_sys *self, const char *arch_file,
+								const char *hw_tasks_file)
+{
+	struct event_handler *cyclic_client;
+	struct event_handler *signals_receiver;
+	int retval;
+
+	DBG_PRINT("fred_sys: starting in hw-tasks test mode\n");
+
+	sys_hw_config_set_devcfg_type(&self->hw_config, SYS_DEVCFG_FPGA_MGR);
+	sys_hw_config_set_slot_type(&self->hw_config, SYS_SLOT_MASTER);
+
+	// Open reconfiguration device
+	retval = devcfg_init(&self->devcfg, &self->hw_config);
+	if (retval) {
+		ERROR_PRINT("fred_sys: unable to open devcfg device\n");
+		goto devcfg_init_error;
+	}
+
+	// Initialize scheduler
+	retval = sched_fred_rand_init(&self->scheduler, self->devcfg);
 	if (retval) {
 		ERROR_PRINT("fred_sys: error while initializing scheduler\n");
 		goto sched_init_error;
@@ -351,16 +450,19 @@ int fred_sys_init(struct fred_sys **self, const char *arch_file,
 	if (!(*self))
 		return -1;
 
+	srand(time(NULL));
+
 	DBG_PRINT(fred_logo);
 
 	switch (mode) {
-		case FRED_NORMAL_MODE:
-			retval = init_normal_mode_(*self, arch_file, hw_tasks_file);
-			break;
-		case FRED_RCFG_TEST_MODE:
+		case FRED_SYS_RCFG_TEST_MODE:
 			retval = init_rcfg_test_mode_(*self, arch_file, hw_tasks_file);
 			break;
+		case FRED_SYS_HW_TASKS_TEST_MODE:
+			retval = init_hw_tasks_test_mode_(*self, arch_file, hw_tasks_file);
+		case FRED_SYS_NORMAL_MODE:
 		default:
+			retval = init_normal_mode_(*self, arch_file, hw_tasks_file);
 			break;
 	}
 
@@ -379,7 +481,7 @@ void fred_sys_free(struct fred_sys *self)
 
 	DBG_PRINT("fred_sys: shutting down\n");
 
-	// Release all registered clients using the
+	// Will release all registered clients using the
 	// free method of the handler
 	if (self->reactor)
 		reactor_free(self->reactor);

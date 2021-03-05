@@ -78,6 +78,9 @@ int bind_all_hw_tasks_(struct cyclic_sw_tasks_client *self)
 			ERROR_PRINT("fred_sys: cyclic sw-tasks client: could not allocate data buffer\n");
 			break;
 		}
+
+		DBG_PRINT("fred_sys: cyclic sw-tasks client: bind to hw-tasks %s\n",
+					hw_task_get_name(self->hw_tasks[i]));
 	}
 
 	return retval;

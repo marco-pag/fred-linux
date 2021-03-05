@@ -10,8 +10,8 @@
  * (at your option) any later version.
 */
 
-#ifndef SCHEDULER_TEST_RCFG_H_
-#define SCHEDULER_TEST_RCFG_H_
+#ifndef SCHEDULER_FRED_RAND_H_
+#define SCHEDULER_FRED_RAND_H_
 
 #include <sys/queue.h>
 
@@ -20,9 +20,10 @@
 #include "../srv_core/devcfg.h"
 #include "../srv_core/scheduler.h"
 
+
 //---------------------------------------------------------------------------------------------
 
-struct scheduler_test_rcfg {
+struct scheduler_fred_rand {
 	// ------------------------//
 	struct scheduler scheduler;
 	// ------------------------//
@@ -34,8 +35,6 @@ struct scheduler_test_rcfg {
 	// Partition queue head
 	struct accel_req_queue fri_queue_head;
 
-	int serving;
-
 	// Reconfiguration device
 	struct devcfg *devcfg;
 };
@@ -43,8 +42,8 @@ struct scheduler_test_rcfg {
 
 //---------------------------------------------------------------------------------------------
 
-int sched_test_rcfg_init(struct scheduler **self, struct devcfg *devcfg);
+int sched_fred_rand_init(struct scheduler **self, struct devcfg *devcfg);
 
 //---------------------------------------------------------------------------------------------
 
-#endif /* SCHEDULER_TEST_RCFG_H_ */
+#endif /* SCHEDULER_FRED_RAND_H_ */

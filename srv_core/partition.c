@@ -66,6 +66,38 @@ int partition_search_slot(struct partition *self, struct slot **slot,
 	return rcfg;
 }
 
+int partition_search_random_slot(struct partition *self, struct slot **slot,
+									const struct hw_task *hw_task)
+{
+	int free_slots_idx[MAX_SLOTS];
+	int free_slots_count = 0;
+	int slot_idx;
+	int rcfg = 1;
+
+	assert(self);
+	assert(hw_task);
+
+	// Collect all free slots in the partition
+	for (int i = 0; i < self->slots_count; ++i) {
+		// If the slot is free
+		if (slot_is_available(self->slots[i]))
+			free_slots_idx[free_slots_count++] = i;
+	}
+
+	// No slot found
+	if (free_slots_count == 0) {
+		*slot = NULL;
+	// If one or more slots has been found, pick a random slot
+	} else {
+		slot_idx = free_slots_idx[rand() % free_slots_count];
+		*slot = self->slots[slot_idx];
+		if (slot_match_hw_task(self->slots[slot_idx], hw_task))
+			rcfg = 0;
+	}
+
+	return rcfg;
+}
+
 int partiton_register_slots(struct partition *self, struct reactor *reactor)
 {
 	int retval;

@@ -20,12 +20,20 @@
 #include "devcfg.h"
 #include "scheduler.h"
 
+
+enum sched_fred_mode {
+	SCHED_FRED_NORMAL,
+	SCHED_FRED_ALWAYS_RCFG
+};
+
 //---------------------------------------------------------------------------------------------
 
 struct scheduler_fred {
 	// ------------------------//
 	struct scheduler scheduler;
 	// ------------------------//
+
+	enum sched_fred_mode mode;
 
 	// Partitions queues heads
 	struct accel_req_queue part_queues_heads[MAX_PARTITIONS];
@@ -41,7 +49,7 @@ struct scheduler_fred {
 
 //---------------------------------------------------------------------------------------------
 
-int sched_fred_init(struct scheduler **self, struct devcfg *devcfg);
+int sched_fred_init(struct scheduler **self, enum sched_fred_mode mode, struct devcfg *devcfg);
 
 //---------------------------------------------------------------------------------------------
 

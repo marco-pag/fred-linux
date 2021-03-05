@@ -10,30 +10,28 @@
  * (at your option) any later version.
 */
 
-
-#include "../srv_core_mocks/scheduler_test_rcfg.h"
-
 #include <stdlib.h>
 
 #include "../srv_core/slot.h"
 #include "../utils/logger.h"
 #include "../utils/dbg_print.h"
+#include "scheduler_fred_rand.h"
 
 //---------------------------------------------------------------------------------------------
 
 static inline
-int start_slot_after_rcfg_(struct scheduler_test_rcfg *self, struct accel_req *request_done);
+int start_slot_after_rcfg_(struct scheduler_fred_rand *self, struct accel_req *request_done);
 
 static inline
-int start_rcfg_(struct scheduler_test_rcfg *self, struct accel_req *request);
+int start_rcfg_(struct scheduler_fred_rand *self, struct accel_req *request);
 
 static inline
-int push_req_fri_queue_(struct scheduler_test_rcfg *self, struct accel_req *request);
+int push_req_fri_queue_(struct scheduler_fred_rand *self, struct accel_req *request);
 
 //---------------------------------------------------------------------------------------------
 
 static inline
-int start_slot_after_rcfg_(struct scheduler_test_rcfg *self, struct accel_req *request_done)
+int start_slot_after_rcfg_(struct scheduler_fred_rand *self, struct accel_req *request_done)
 {
 	int retval;
 	struct slot *slot;
@@ -74,8 +72,9 @@ int start_slot_after_rcfg_(struct scheduler_test_rcfg *self, struct accel_req *r
 	return 0;
 }
 
+
 static inline
-int start_rcfg_(struct scheduler_test_rcfg *self, struct accel_req *request)
+int start_rcfg_(struct scheduler_fred_rand *self, struct accel_req *request)
 {
 	int retval;
 
@@ -92,8 +91,8 @@ int start_rcfg_(struct scheduler_test_rcfg *self, struct accel_req *request)
 		retval = start_slot_after_rcfg_(self, request);
 
 	} else {
-		logger_log(LOG_LEV_FULL,"\tfred_sys: start rcfg of slot:"
-								"%d of partition: %s for hw-task: %s",
+		logger_log(LOG_LEV_FULL,"\tfred_sys: start rcfg of slot: %d"
+								" of partition: %s for hw-task: %s",
 								slot_get_index(accel_req_get_slot(request)),
 								partition_get_name(hw_task_get_partition(
 										accel_req_get_hw_task(request))),
@@ -133,7 +132,7 @@ void ins_req_ordered_(struct accel_req_queue *queue_head, struct accel_req *new_
 
 //TODO: integrate the function above to avoid insert and remove
 static inline
-int push_req_fri_queue_(struct scheduler_test_rcfg *self, struct accel_req *request)
+int push_req_fri_queue_(struct scheduler_fred_rand *self, struct accel_req *request)
 {
 	// Insert the request directly into FRI queue
 	ins_req_ordered_(&self->fri_queue_head, request);
@@ -158,12 +157,11 @@ int push_req_fri_queue_(struct scheduler_test_rcfg *self, struct accel_req *requ
 // ------------------------ Functions to implement scheduler interface ------------------------
 
 // Acceleration request from software tasks
-// Never skip reconfiguration
 static
-int sched_test_rcfg_push_accel_req_(struct scheduler *self, struct accel_req *request)
+int sched_fred_push_accel_req_(struct scheduler *self, struct accel_req *request)
 {
 	int retval;
-	struct scheduler_test_rcfg *sched;
+	struct scheduler_fred_rand *sched;
 	struct hw_task *hw_task;
 	struct slot *slot;
 	struct partition *partition;
@@ -171,7 +169,7 @@ int sched_test_rcfg_push_accel_req_(struct scheduler *self, struct accel_req *re
 	assert(self);
 	assert(request);
 
-	sched = (struct scheduler_test_rcfg *)self;
+	sched = (struct scheduler_fred_rand *)self;
 
 	// Set request's time stamp
 	accel_req_stamp_timestamp(request);
@@ -179,7 +177,7 @@ int sched_test_rcfg_push_accel_req_(struct scheduler *self, struct accel_req *re
 	// Search a free slot in the partition
 	hw_task = accel_req_get_hw_task(request);
 	partition = hw_task_get_partition(hw_task);
-	partition_search_slot(partition, &slot, hw_task);
+	partition_search_random_slot(partition, &slot, hw_task);
 
 	// If all slots in the partition are occupied
 	if (!slot) {
@@ -194,7 +192,7 @@ int sched_test_rcfg_push_accel_req_(struct scheduler *self, struct accel_req *re
 
 		retval = 0;
 
-	// At least one free slot in the partition
+	// At least one free slot in the partition, never skip reconfiguration
 	} else {
 		// Reserve the slot for the HW-task
 		slot_set_reserved(slot);
@@ -216,16 +214,16 @@ int sched_test_rcfg_push_accel_req_(struct scheduler *self, struct accel_req *re
 
 // Reconfiguration done
 static
-int sched_test_rcfg_rcfg_complete_(struct scheduler *self, struct accel_req *request_done)
+int sched_fred_rcfg_complete_(struct scheduler *self, struct accel_req *request_done)
 {
-	struct scheduler_test_rcfg *sched;
+	struct scheduler_fred_rand *sched;
 	struct slot *slot;
 	int rcfg_time_us;
 
 	assert(self);
 	assert(request_done);
 
-	sched = (struct scheduler_test_rcfg *)self;
+	sched = (struct scheduler_fred_rand *)self;
 
 	// Get the slot that has been reconfigured
 	slot = accel_req_get_slot(request_done);
@@ -248,6 +246,7 @@ int sched_test_rcfg_rcfg_complete_(struct scheduler *self, struct accel_req *req
 	slot_reinit_after_rcfg(slot);
 
 #ifdef RCFG_CHECK
+	// Only for testing
 	// Check if the right hw-task has been reconfigured
 	if (!slot_check_hw_task_consistency(slot)) {
 		ERROR_PRINT("\tfred_sys: critical error: mismatch on slot %d"
@@ -267,10 +266,10 @@ int sched_test_rcfg_rcfg_complete_(struct scheduler *self, struct accel_req *req
 
 // Hardware task execution completed
 static
-int sched_test_rcfg_slot_complete_(struct scheduler *self, struct accel_req *request_done)
+int sched_fred_slot_complete_(struct scheduler *self, struct accel_req *request_done)
 {
 	int retval;
-	struct scheduler_test_rcfg *sched;
+	struct scheduler_fred_rand *sched;
 	struct slot *slot;
 	struct partition *partition;
 	struct accel_req *request;
@@ -279,7 +278,7 @@ int sched_test_rcfg_slot_complete_(struct scheduler *self, struct accel_req *req
 	assert(self);
 	assert(request_done);
 
-	sched = (struct scheduler_test_rcfg *)self;
+	sched = (struct scheduler_fred_rand *)self;
 
 	slot = accel_req_get_slot(request_done);
 	assert(slot);
@@ -324,11 +323,11 @@ int sched_test_rcfg_slot_complete_(struct scheduler *self, struct accel_req *req
 }
 
 static
-void sched_test_rcfg_free_(struct scheduler *self)
+void sched_fred_free_(struct scheduler *self)
 {
-	struct scheduler_fred *sched;
+	struct scheduler_fred_rand *sched;
 
-	sched = (struct scheduler_fred *)self;
+	sched = (struct scheduler_fred_rand *)self;
 
 	if(sched)
 		free(sched);
@@ -336,9 +335,9 @@ void sched_test_rcfg_free_(struct scheduler *self)
 
 //---------------------------------------------------------------------------------------------
 
-int sched_test_rcfg_init(struct scheduler **self, struct devcfg *devcfg)
+int sched_fred_rand_init(struct scheduler **self, struct devcfg *devcfg)
 {
-	struct scheduler_test_rcfg *sched;
+	struct scheduler_fred_rand *sched;
 
 	assert(devcfg);
 
@@ -353,10 +352,10 @@ int sched_test_rcfg_init(struct scheduler **self, struct devcfg *devcfg)
 	sched->devcfg = devcfg;
 
 	// Scheduler interface
-	sched->scheduler.push_accel_req = sched_test_rcfg_push_accel_req_;
-	sched->scheduler.rcfg_complete = sched_test_rcfg_rcfg_complete_;
-	sched->scheduler.slot_complete = sched_test_rcfg_slot_complete_;
-	sched->scheduler.free = sched_test_rcfg_free_;
+	sched->scheduler.push_accel_req = sched_fred_push_accel_req_;
+	sched->scheduler.rcfg_complete = sched_fred_rcfg_complete_;
+	sched->scheduler.slot_complete = sched_fred_slot_complete_;
+	sched->scheduler.free = sched_fred_free_;
 
 	// Initialize partition queues heads
 	for (int i = 0; i < MAX_PARTITIONS; ++i)
@@ -367,5 +366,5 @@ int sched_test_rcfg_init(struct scheduler **self, struct devcfg *devcfg)
 
 	*self = &sched->scheduler;
 
-	return 0 ;
+	return 0;
 }

@@ -76,6 +76,10 @@ int partition_add_slot(struct partition *self, struct slot *slot);
 int partition_search_slot(struct partition *self, struct slot **slot,
 							const struct hw_task *hw_task);
 
+// Pick a random slot among the slots that are free (for testing)
+int partition_search_random_slot(struct partition *self, struct slot **slot,
+									const struct hw_task *hw_task);
+
 int partiton_register_slots(struct partition *self, struct reactor *reactor);
 
 void partiton_print(const struct partition *self, char *str, int str_size);

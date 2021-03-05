@@ -19,9 +19,9 @@
 struct fred_sys;
 
 enum fred_sys_mode {
-	FRED_NORMAL_MODE,			// Regular operation
-	FRED_RCFG_TEST_MODE,		// Reconfiguration test
-	FRED_HW_TASKS_TEST_MODE		// Hw-tasks execution test (to be implemented)
+	FRED_SYS_NORMAL_MODE,			// Regular operation
+	FRED_SYS_RCFG_TEST_MODE,		// Reconfiguration cyclic test
+	FRED_SYS_HW_TASKS_TEST_MODE		// Hw-tasks execution cyclic test
 };
 
 //---------------------------------------------------------------------------------------------

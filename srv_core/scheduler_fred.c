@@ -91,8 +91,8 @@ int start_rcfg_(struct scheduler_fred *self, struct accel_req *request)
 		retval = start_slot_after_rcfg_(self, request);
 
 	} else {
-		logger_log(LOG_LEV_FULL,"\tfred_sys: start rcfg of slot:"
-								"%d of partition: %s for hw-task: %s",
+		logger_log(LOG_LEV_FULL,"\tfred_sys: start rcfg of slot: %d"
+								" of partition: %s for hw-task: %s",
 								slot_get_index(accel_req_get_slot(request)),
 								partition_get_name(hw_task_get_partition(
 										accel_req_get_hw_task(request))),
@@ -200,7 +200,7 @@ int sched_fred_push_accel_req_(struct scheduler *self, struct accel_req *request
 		accel_req_set_slot(request, slot);
 
 		// If possible, set for skipping rcfg
-		if (!rcfg)
+		if (!rcfg && sched->mode != SCHED_FRED_ALWAYS_RCFG)
 			accel_req_set_skip_rcfg(request);
 
 		logger_log(LOG_LEV_FULL,"\tfred_sys: hw-task: %s got slot: %d of"
@@ -251,6 +251,7 @@ int sched_fred_rcfg_complete_(struct scheduler *self, struct accel_req *request_
 	slot_reinit_after_rcfg(slot);
 
 #ifdef RCFG_CHECK
+	// Only for testing
 	// Check if the right hw-task has been reconfigured
 	if (!slot_check_hw_task_consistency(slot)) {
 		ERROR_PRINT("\tfred_sys: critical error: mismatch on slot %d"
@@ -339,7 +340,7 @@ void sched_fred_free_(struct scheduler *self)
 
 //---------------------------------------------------------------------------------------------
 
-int sched_fred_init(struct scheduler **self, struct devcfg *devcfg)
+int sched_fred_init(struct scheduler **self, enum sched_fred_mode mode, struct devcfg *devcfg)
 {
 	struct scheduler_fred *sched;
 
@@ -353,6 +354,7 @@ int sched_fred_init(struct scheduler **self, struct devcfg *devcfg)
 		return -1;
 
 	// Set properties and methods
+	sched->mode = mode;
 	sched->devcfg = devcfg;
 
 	// Scheduler interface
