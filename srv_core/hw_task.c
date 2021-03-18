@@ -31,7 +31,7 @@ uint32_t swab32_(uint32_t x)
 
 // Straight from Xilinx's code. Returns the new size.
 static
-size_t mangle_bitstream_(uint8_t *bitstream, size_t length)
+ssize_t mangle_bitstream_(uint8_t *bitstream, size_t length)
 {
 	int i;
 	int endian_swap = 0;
@@ -95,14 +95,15 @@ int gen_user_buffs_(struct fred_buff_if *buff_if, struct user_buff *buff_usr)
 
 // NOTE: this part will change with the new reconfiguration driver
 static
-ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name, struct fred_buff_if **buff_if)
+ssize_t load_bit_buffer_dev_(buffctl_ft *buffctl, char *file_name,
+								struct fred_buff_if **buff_if)
 {
 	int retval;
 	ssize_t length;
 	void *buff_v;
 	struct user_buff user_buffer;
 
-	unsigned int b_read;
+	ssize_t b_read;
 	ssize_t file_size;
 	FILE *file_p;
 
