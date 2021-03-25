@@ -12,7 +12,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <time.h>
 
 #include "accel_req.h"
 #include "slot.h"
@@ -128,6 +128,7 @@ void devcfg_attach_scheduler(struct devcfg *self, struct scheduler *scheduler)
 
 int devcfg_start_prog(struct devcfg *self, struct accel_req *request)
 {
+	struct timespec ts_start;
 
 	assert(self);
 	assert(request);
@@ -139,17 +140,27 @@ int devcfg_start_prog(struct devcfg *self, struct accel_req *request)
 	// Bind hw-task to the slot
 	slot_set_hw_task(accel_req_get_slot(request), accel_req_get_hw_task(request));
 
+	// Take time
+	clock_gettime(CLOCK_MONOTONIC, &ts_start);
+	self->t_begin = ts_start.tv_sec * 1000000 + ts_start.tv_nsec / 1000;
+
 	// And start reconfiguration
 	return devcfg_drv_start_rcfg(self->drv, accel_req_get_phy_bit(request));
 }
 
 int64_t devcfg_clear_evt(struct devcfg *self)
 {
+	struct timespec ts_now;
+
 	assert(self);
 	assert(self->state == DEVCFG_PROG);
 
+	clock_gettime(CLOCK_MONOTONIC, &ts_now);
+
 	self->state = DEVCFG_IDLE;
 
-	return devcfg_drv_after_rcfg(self->drv);
+	devcfg_drv_after_rcfg(self->drv);
+
+	return (ts_now.tv_sec * 1000000 + ts_now.tv_nsec / 1000) - self->t_begin;
 }
 

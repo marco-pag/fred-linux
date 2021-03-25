@@ -37,6 +37,8 @@ struct devcfg {
 	struct accel_req *current_rcfg_req;
 
 	struct scheduler *scheduler;
+
+	uint64_t t_begin;
 };
 
 //---------------------------------------------------------------------------------------------
