@@ -76,7 +76,8 @@ void devcfg_attach_scheduler(struct devcfg *self, struct scheduler *scheduler);
 
 int devcfg_start_prog(struct devcfg *self, struct accel_req *request);
 
-int64_t devcfg_clear_evt(struct devcfg *self);
+// Returns reconfiguration time in us
+uint64_t devcfg_clear_evt(struct devcfg *self);
 
 //---------------------------------------------------------------------------------------------
 

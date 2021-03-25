@@ -122,18 +122,6 @@ void slot_set_hw_task(struct slot *self, struct hw_task *hw_task)
 	self->hw_task = hw_task;
 }
 
-// TODO: optimize time keeping
-static inline
-uint32_t slot_get_exec_time_us(const struct slot *self)
-{
-	struct timespec ts_now;
-
-	assert(self);
-
-	clock_gettime(CLOCK_MONOTONIC, &ts_now);
-	return (ts_now.tv_sec * 1000000 + ts_now.tv_nsec / 1000) - self->t_begin;
-}
-
 // For testing purposes
 static inline
 int slot_check_hw_task_consistency(const struct slot *self)
@@ -201,15 +189,22 @@ int slot_start_compute(struct slot *self, struct accel_req *exec_req)
 	return retval;
 }
 
+// Returns execution time in us
+// TODO: improve timekeeping
 static inline
-void slot_clear_after_compute(struct slot *self)
+uint64_t slot_clear_after_compute(struct slot *self)
 {
+	struct timespec ts_now;
+
 	assert(self);
 	assert(self->state == SLOT_EXEC);
 
 	slot_drv_after_compute(self->slot_dev);
 
 	self->state = SLOT_IDLE;
+
+	clock_gettime(CLOCK_MONOTONIC, &ts_now);
+	return (ts_now.tv_sec * 1000000 + ts_now.tv_nsec / 1000) - self->t_begin;
 }
 
 //---------------------------------------------------------------------------------------------

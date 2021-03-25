@@ -274,6 +274,7 @@ static
 int sched_fred_slot_complete_(struct scheduler *self, struct accel_req *request_done)
 {
 	int retval;
+	uint64_t exec_time_us;
 	struct scheduler_fred *sched;
 	struct slot *slot;
 	struct partition *partition;
@@ -291,14 +292,14 @@ int sched_fred_slot_complete_(struct scheduler *self, struct accel_req *request_
 	partition = hw_task_get_partition(accel_req_get_hw_task(request_done));
 	assert(partition);
 
+	// Clear slot device
+	exec_time_us = slot_clear_after_compute(slot);
+
 	logger_log(LOG_LEV_FULL,"\tfred_sys: slot: %d of partition: %s"
 							" completed execution of hw-task: %s in %u us",
 							slot_get_index(slot), partition_get_name(partition),
 							hw_task_get_name(accel_req_get_hw_task(request_done)),
-							slot_get_exec_time_us(slot));
-
-	// Clear slot device
-	slot_clear_after_compute(slot);
+							exec_time_us);
 
 	// Notify the client through the notify action callback
 	retval = accel_req_notify_action(request_done);
