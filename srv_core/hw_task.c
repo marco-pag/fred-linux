@@ -199,6 +199,9 @@ int hw_task_init(struct hw_task **self, uint32_t hw_id, const char *name,
 	bits_count = partition_get_slots_count((*self)->partition);
 	part_name = partition_get_name((*self)->partition);
 
+	// Set hw-task timeout to default
+	(*self)->timeout_us = DEF_HW_TASK_TIMEOUT_US;
+
 	// One bitstream for each slot in the partition
 	for (int i = 0; i < bits_count; ++i) {
 		// Build bistream path with name

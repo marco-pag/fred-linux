@@ -14,7 +14,10 @@
 #define SCHEDULER_H_
 
 #include "../parameters.h"
-#include "accel_req.h"
+
+//---------------------------------------------------------------------------------------------
+
+struct accel_req;
 
 //---------------------------------------------------------------------------------------------
 // Scheduler interface
@@ -23,9 +26,11 @@ struct scheduler {
 
 	int (*push_accel_req)(struct scheduler *self, struct accel_req *request);
 
-	int (*rcfg_complete)(struct scheduler *self, struct accel_req *request_done);
+	int (*rcfg_complete)(struct scheduler *self, struct accel_req *request);
 
-	int (*slot_complete)(struct scheduler *self, struct accel_req *request_done);
+	int (*slot_complete)(struct scheduler *self, struct accel_req *request);
+
+	int (*slot_timeout)(struct scheduler *self, struct accel_req *request);
 
 	void (*free)(struct scheduler *self);
 };
@@ -41,19 +46,27 @@ int scheduler_push_accel_req(struct scheduler *self, struct accel_req *request)
 }
 
 static inline
-int scheduler_rcfg_complete(struct scheduler *self, struct accel_req *request_done)
+int scheduler_rcfg_complete(struct scheduler *self, struct accel_req *request)
 {
 	assert(self);
 
-	return self->rcfg_complete(self, request_done);
+	return self->rcfg_complete(self, request);
 }
 
 static inline
-int scheduler_slot_complete(struct scheduler *self, struct accel_req *request_done)
+int scheduler_slot_complete(struct scheduler *self, struct accel_req *request)
 {
 	assert(self);
 
-	return self->slot_complete(self, request_done);
+	return self->slot_complete(self, request);
+}
+
+static inline
+int scheduler_slot_timeout(struct scheduler *self, struct accel_req *request)
+{
+	assert(self);
+
+	return self->slot_timeout(self, request);
 }
 
 static inline

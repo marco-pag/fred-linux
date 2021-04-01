@@ -17,6 +17,7 @@
 #include "sys_layout.h"
 #include "hw_task.h"
 #include "slot.h"
+#include "slot_timer.h"
 #include "../srv_support/pars.h"
 #include "../parameters.h"
 #include "../utils/dbg_print.h"
@@ -48,12 +49,13 @@ int build_partitions_(struct sys_layout *self, const struct sys_hw_config *hw_co
 {
 	int retval = 0;
 	char arch_path[MAX_PATH];
-	struct tokens *tokens = NULL;
+	struct tokens *tokens;
 
 	const char *part_name;
 	int part_slots_count;
 
-	struct slot *slot = NULL;
+	struct slot *slot;
+	struct slot_timer *timer;
 	char dev_name[MAX_NAMES];
 	char dec_name[MAX_NAMES];
 
@@ -99,15 +101,25 @@ int build_partitions_(struct sys_layout *self, const struct sys_hw_config *hw_co
 
 			// Create a new slot
 			retval = slot_init(&slot, hw_config, s, dev_name, dec_name, scheduler);
-			if (retval < 0) {
+			if (retval) {
 				ERROR_PRINT("fred_sys: error: unable to initialize slot %u of "
 							"partition %s\n", s, part_name);
 				pars_free_tokens(tokens);
 				return -1;
 			}
 
+			// Create e new slot timer
+			retval = slot_timer_init(&timer, scheduler);
+			if (retval) {
+				ERROR_PRINT("fred_sys: error: unable to initialize slot timer %u of "
+							"partition %s\n", s, part_name);
+
+				pars_free_tokens(tokens);
+				return -1;
+			}
+
 			// And add to the partition
-			partition_add_slot(self->partitions[p], slot);
+			partition_add_slot(self->partitions[p], slot, timer);
 		}
 	}
 	return 0;

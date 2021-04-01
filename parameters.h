@@ -51,6 +51,12 @@
 
 //-------------------------------------------------------------------------------
 
+#define DEF_HW_TASK_TIMEOUT_US	(10 * 1000 * 1000)
+
+#define SIG_HW_TASK_TIMEOUT		SIGRTMIN
+
+//-------------------------------------------------------------------------------
+
 #ifndef LOG_GLOBAL_LEVEL
 #define LOG_GLOBAL_LEVEL LOG_LEV_MUTE
 #endif

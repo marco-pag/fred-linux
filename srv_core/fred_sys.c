@@ -460,6 +460,7 @@ int fred_sys_init(struct fred_sys **self, const char *arch_file,
 			break;
 		case FRED_SYS_HW_TASKS_TEST_MODE:
 			retval = init_hw_tasks_test_mode_(*self, arch_file, hw_tasks_file);
+			break;
 		case FRED_SYS_NORMAL_MODE:
 		default:
 			retval = init_normal_mode_(*self, arch_file, hw_tasks_file);

@@ -160,7 +160,7 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 		if (self->state != CLIENT_READY) {
 			retval = send_fred_message_(self->conn_sock, FRED_MSG_ERROR, 0);
 		} else {
-			// Get HW-task id from request
+			// Get hw-task id from request
 			arg = fred_msg_get_arg(msg);
 			hw_task = sys_layout_get_hw_task(self->sys, arg);
 			if (!hw_task) {
@@ -169,6 +169,13 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 				break;
 
 			} else {
+				// If the hw-task has been already disable due to an overrun
+				if (hw_task_get_banned(hw_task)) {
+					retval = send_fred_message_(self->conn_sock, FRED_MSG_ERROR, 0);
+					break;
+				}
+
+				// Cannot bind any additional hw-task
 				if (self->hw_tasks_count >= MAX_HW_TASKS - 1) {
 					ERROR_PRINT("fred_sys: critical: maximum number of hw-tasks"
 								" exceeded: detaching client\n");
@@ -206,7 +213,7 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 		if (self->state != CLIENT_READY) {
 			retval = send_fred_message_(self->conn_sock, FRED_MSG_ERROR, 0);
 		} else {
-			// Get HW-task id from request
+			// Get hw-task id from request
 			arg = fred_msg_get_arg(msg);
 			idx = -1;
 			// Find requested hw-task
@@ -216,12 +223,20 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 					break;
 				}
 			}
+
+			// If the requested hw-task is not associated with this sw-task
 			if (idx < 0) {
 				retval = send_fred_message_(self->conn_sock, FRED_MSG_ERROR, 0);
 				break;
 			}
 
-			// Build and fire acceleration request
+			// If the hw-task exist but it has been already disable due to an overrun
+			if (hw_task_get_banned(self->hw_tasks[idx])) {
+				retval = send_fred_message_(self->conn_sock, FRED_MSG_ERROR, 0);
+				break;
+			}
+
+			// The hw-task exist: build and fire acceleration request
 			accel_req_unbind(&self->accel_req);
 			accel_req_set_hw_task(&self->accel_req, self->hw_tasks[idx]);
 			// Set hardware arguments (memory buffer pointers)
@@ -259,16 +274,28 @@ int process_msg_(struct sw_task_client *self, const struct fred_msg *msg)
 //---------------------------------------------------------------------------------------------
 
 static
-int sw_task_client_notify_action_(void *notifier)
+int sw_task_client_notify_action_(void *notifier, enum notify_action_msg msg)
 {
 	struct sw_task_client *self;
+	int retval;
 
 	assert(notifier);
 
 	self = (struct sw_task_client *)notifier;
 
-	// Notify the client that his acceleration request has been completed
-	return send_fred_message_(self->conn_sock, FRED_MSG_DONE, 0);
+	switch (msg) {
+		case NOTIFY_ACTION_DONE:
+			// Notify the client that his acceleration request has been completed
+			retval = send_fred_message_(self->conn_sock, FRED_MSG_DONE, 0);
+			break;
+		case NOTIFY_ACTION_OVERRUN:
+		default:
+			// Notify the client that the hw-task overrun and will be disabled
+			retval = send_fred_message_(self->conn_sock, FRED_MSG_OVERRUN, 0);
+			break;
+	}
+
+	return retval;
 }
 
 // ---------------------- Functions to implement event_handler interface ----------------------

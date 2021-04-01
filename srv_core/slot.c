@@ -60,7 +60,6 @@ void get_name_(const struct event_handler *self, char *msg, int msg_size)
 	snprintf(msg, msg_size, "slot device %u on fd: %d",
 			slot->index,
 			slot_drv_get_fd(slot->slot_dev));
-
 }
 
 static

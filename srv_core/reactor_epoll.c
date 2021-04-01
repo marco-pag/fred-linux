@@ -199,7 +199,7 @@ void reactor_event_loop(struct reactor *self)
 // Still the most straightforward way to exit from nested loops
 // without using cumbersome logic conditions and unnecessary extra variables
 exit_clear:
-	ERROR_PRINT("fred_sys: epoll reactor: shutting down event loop");
+	ERROR_PRINT("fred_sys: epoll reactor: shutting down event loop\n");
 	free_all_events_source_(self);
 	return;
 }

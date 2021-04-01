@@ -33,10 +33,6 @@ struct devcfg_drv {
 
 //---------------------------------------------------------------------------------------------
 
-//int devcfg_drv_init(devcfg_drv **self);
-
-//void devcfg_drv_free(devcfg_drv *devcfg);
-
 static inline
 int devcfg_drv_get_fd(struct devcfg_drv *self)
 {

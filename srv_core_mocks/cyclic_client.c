@@ -106,7 +106,7 @@ void build_accel_request_(struct cyclic_sw_tasks_client *self, int hw_task_idx)
 //---------------------------------------------------------------------------------------------
 
 static
-int cyclic_client_notify_action_(void *notifier)
+int cyclic_client_notify_action_(void *notifier, enum notify_action_msg msg)
 {
 	int retval;
 	struct cyclic_sw_tasks_client *cp;
@@ -144,7 +144,13 @@ void get_name_(const struct event_handler *self, char *msg, int msg_size)
 	assert(self);
 	assert(msg);
 
-	snprintf(msg, msg_size, "cyclic sw-tasks client for testing purposes");
+	struct cyclic_sw_tasks_client *cp;
+
+	assert(self);
+
+	cp = (struct cyclic_sw_tasks_client *)self;
+
+	snprintf(msg, msg_size, "cyclic sw-tasks test client on fd: %d", cp->out_fd);
 }
 
 static
@@ -181,13 +187,14 @@ int handle_event_(struct event_handler *self)
 		return -1;
 	}
 
-	// Pass acceleration request and pass it to the scheduler
+	// Build the acceleration request for the next task (even if banned)
+	// and pass it to the scheduler
 	build_accel_request_(cp, cp->next_hw_task);
 	retval = scheduler_push_accel_req(cp->scheduler, &cp->accel_req);
 	if (retval)
 		return -1;
 
-	// Increment hw-tasks cyclic counter
+	// Increment next hw-tasks cyclic counter
 	cp->next_hw_task = (cp->next_hw_task + 1) % cp->hw_tasks_count;
 
 	// The event has been served correctly
@@ -250,7 +257,7 @@ int cyclic_sw_tasks_client_init(struct event_handler **self, struct sys_layout *
 		return -1;
 	}
 
-	// Trigger the next acceleration request event
+	// Trigger the first acceleration request event
 	retval = fd_utils_byte_write(client->in_fd);
 	if (retval) {
 		ERROR_PRINT("fred_sys: cyclic sw-tasks client: temporary file write error\n");

@@ -89,8 +89,6 @@ void get_name_(const struct event_handler *self, char *msg, int msg_size)
 	snprintf(msg, msg_size, "signals handler on fd: %d", recv->fd);
 }
 
-// Cannot be deallocated through the handler by the reactor
-// Must be deallocated manually
 static
 void free_(struct event_handler *self)
 {

@@ -16,6 +16,7 @@
 #include <assert.h>
 
 #include "../parameters.h"
+#include "slot_timer.h"
 #include "reactor.h"
 
 //---------------------------------------------------------------------------------------------
@@ -33,6 +34,9 @@ struct partition {
 
 	struct slot *slots[MAX_SLOTS];
 	int slots_count;
+
+	// One execution timer per slot
+	struct slot_timer *timers[MAX_SLOTS];
 };
 
 //---------------------------------------------------------------------------------------------
@@ -67,18 +71,18 @@ int partition_init(struct partition **self, const char *name, int index);
 
 void partition_free(struct partition *self);
 
-int partition_add_slot(struct partition *self, struct slot *slot);
+int partition_add_slot(struct partition *self, struct slot *slot, struct slot_timer *timer);
 
 // hw_task is passed for reconfiguration optimization.
 // Set slot pointer to the the first free slot.
 // If all slots are occupied set slot pointer to null
 // if no reconfiguration required return 0, otherwise 1
 int partition_search_slot(struct partition *self, struct slot **slot,
-							const struct hw_task *hw_task);
+							struct slot_timer **timer, const struct hw_task *hw_task);
 
-// Pick a random slot among the slots that are free (for testing)
+// Pick a random slot among the slots that are free (for testing proposes)
 int partition_search_random_slot(struct partition *self, struct slot **slot,
-									const struct hw_task *hw_task);
+									struct slot_timer **timer, const struct hw_task *hw_task);
 
 int partiton_register_slots(struct partition *self, struct reactor *reactor);
 

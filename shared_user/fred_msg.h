@@ -19,16 +19,17 @@
 
 enum msg_head_ {
 	// Client requests
-	FRED_MSG_INIT   = 101,
-	FRED_MSG_BIND   = 201,
-	FRED_MSG_RUN    = 301,
-	FRED_MSG_DONE   = 401,
+	FRED_MSG_INIT		= 101,
+	FRED_MSG_BIND		= 201,
+	FRED_MSG_RUN		= 301,
 	// Server Replies
-	FRED_MSG_ACK    = 501,
-	FRED_MSG_BUFFS  = 601,
-	FRED_MSG_ERROR  = 701,	// Client request error
+	FRED_MSG_DONE		= 401,
+	FRED_MSG_OVERRUN	= 402,
+	FRED_MSG_ACK		= 501,
+	FRED_MSG_BUFFS		= 601,
+	FRED_MSG_ERROR		= 701,	// Client request error
 	// Server notices
-	FRED_MSG_CRIT   = 801,	// Server internal error
+	FRED_MSG_CRIT		= 801,	// Server internal error
 };
 
 struct fred_msg {

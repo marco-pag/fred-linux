@@ -22,11 +22,16 @@
 #include "../srv_core/phy_bit.h"
 
 //---------------------------------------------------------------------------------------------
-// Forward declarations to avoid circular dependencies
-// from including slot.h and hw_task.h
 
 struct slot;
 struct hw_task;
+
+//---------------------------------------------------------------------------------------------
+
+enum notify_action_msg {
+	NOTIFY_ACTION_DONE,
+	NOTIFY_ACTION_OVERRUN
+};
 
 //---------------------------------------------------------------------------------------------
 
@@ -38,6 +43,7 @@ struct accel_req {
 
 	struct hw_task *hw_task;
 	struct slot *slot;
+	struct slot_timer *exec_timer;
 
 	// Issuing time stamp
 	struct timespec tstamp;
@@ -47,7 +53,7 @@ struct accel_req {
 
 	// Notify when the request has been executed
 	// (whole acceleration process has been completed)
-	int (*notify_action)(void *self);
+	int (*notify_action)(void *self, enum notify_action_msg);
 	void *notifier;
 
 	// List element (next and previous element pointers)
@@ -136,6 +142,22 @@ void accel_req_set_slot(struct accel_req *self, struct slot *slot)
 }
 
 static inline
+struct slot_timer *accel_req_get_timer(const struct accel_req *self)
+{
+	assert(self);
+
+	return self->exec_timer;
+}
+
+static inline
+void accel_req_set_timer(struct accel_req *self, struct slot_timer *timer)
+{
+	assert(self);
+
+	self->exec_timer = timer;
+}
+
+static inline
 struct hw_task *accel_req_get_hw_task(const struct accel_req *self)
 {
 	assert(self);
@@ -153,23 +175,11 @@ void accel_req_set_hw_task(struct accel_req *self, struct hw_task *hw_task)
 }
 
 static inline
-void accel_req_set_notifier(struct accel_req *self,
-							int (*notify_action)(void *), void *notifier)
-{
-	assert(self);
-	assert(notify_action);
-	assert(notifier);
-
-	self->notify_action = notify_action;
-	self->notifier = notifier;
-}
-
-static inline
-int accel_req_notify_action(struct accel_req *self)
+int accel_req_notify_action(struct accel_req *self, enum notify_action_msg msg)
 {
 	assert(self);
 
-	return self->notify_action(self->notifier);
+	return self->notify_action(self->notifier, msg);
 }
 
 static inline
@@ -207,6 +217,10 @@ int accel_req_compare_timestamps(const struct accel_req *self,
 //---------------------------------------------------------------------------------------------
 
 const struct phy_bit *accel_req_get_phy_bit(const struct accel_req *self);
+
+void accel_req_set_notifier(struct accel_req *self,
+							int (*notify_action)(void *, enum notify_action_msg),
+							void *notifier);
 
 //---------------------------------------------------------------------------------------------
 

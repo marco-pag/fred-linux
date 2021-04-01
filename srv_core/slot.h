@@ -15,7 +15,6 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include <time.h>
 
 #include "event_handler.h"
 #include "accel_req.h"
@@ -29,11 +28,11 @@
 
 //---------------------------------------------------------------------------------------------
 //
-//					|--------(skip reconfiguration)---------|
-//					|										V
+//                  |--------(skip reconfiguration)---------| |-(timeout)-|
+//                  |                                       V |           V
 // SLOT_BLANK -> SLOT_RSRV -> SLOT_RCFG -> SLOT_READY -> SLOT_EXEC -> SLOT_IDLE
-//					^													|
-//					|---------------------------------------------------|
+//                  ^                                                     |
+//                  |-----------------------------------------------------|
 //
 //---------------------------------------------------------------------------------------------
 
@@ -59,7 +58,6 @@ struct slot {
 
 	int index;
 
-	// Fred scheduler
 	struct scheduler *scheduler;
 
 	// Holds the request associated to the
@@ -69,8 +67,6 @@ struct slot {
 	// Currently configured Hw-task
 	// Consistent when in SLOT_IDLE state
 	struct hw_task *hw_task;
-
-	uint64_t t_begin;
 };
 
 //---------------------------------------------------------------------------------------------
@@ -167,7 +163,6 @@ static inline
 int slot_start_compute(struct slot *self, struct accel_req *exec_req)
 {
 	int retval;
-	struct timespec ts_start;
 
 	assert(self);
 	assert(exec_req);
@@ -177,10 +172,6 @@ int slot_start_compute(struct slot *self, struct accel_req *exec_req)
 	self->exec_req = exec_req;
 	self->state = SLOT_EXEC;
 
-	// Take time
-	clock_gettime(CLOCK_MONOTONIC, &ts_start);
-	self->t_begin = ts_start.tv_sec * 1000000 + ts_start.tv_nsec / 1000;
-
 	// And start
 	retval = slot_drv_start_compute(self->slot_dev,
 									accel_req_get_args(exec_req),
@@ -189,22 +180,28 @@ int slot_start_compute(struct slot *self, struct accel_req *exec_req)
 	return retval;
 }
 
-// Returns execution time in us
-// TODO: improve timekeeping
 static inline
-uint64_t slot_clear_after_compute(struct slot *self)
+void slot_disable_after_timeout(struct slot *self)
 {
-	struct timespec ts_now;
+	assert(self);
+	assert(self->state == SLOT_EXEC);
 
+	// Suspend the slot until the next reconfiguration
+	decoup_drv_decouple(self->dec_dev);
+
+	// Set blank to avoid reuse and force a new reconfiguration
+	self->state = SLOT_BLANK;
+}
+
+static inline
+void slot_clear_after_compute(struct slot *self)
+{
 	assert(self);
 	assert(self->state == SLOT_EXEC);
 
 	slot_drv_after_compute(self->slot_dev);
 
 	self->state = SLOT_IDLE;
-
-	clock_gettime(CLOCK_MONOTONIC, &ts_now);
-	return (ts_now.tv_sec * 1000000 + ts_now.tv_nsec / 1000) - self->t_begin;
 }
 
 //---------------------------------------------------------------------------------------------

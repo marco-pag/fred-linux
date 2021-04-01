@@ -40,6 +40,10 @@ struct hw_task {
 	// a client must be allocated)
 	unsigned int data_buffs_sizes[MAX_DATA_BUFFS];
 	int data_buffs_count;
+
+	// Hardware timeout
+	uint32_t timeout_us;
+	int banned;
 };
 
 // [1] 	- The size maybe less than the buffer size due to proprietary bitstreams mangling
@@ -95,6 +99,38 @@ const struct phy_bit *hw_task_get_bit_phy(const struct hw_task *self,
 	assert(slot_idx < partition_get_slots_count(self->partition));
 
 	return &self->bits_phys[slot_idx];
+}
+
+static inline
+uint32_t hw_task_get_timeout_us(const struct hw_task *self)
+{
+	assert(self);
+
+	return self->timeout_us;
+}
+
+static inline
+void hw_task_set_timeout_us(struct hw_task *self, uint32_t timeout_us)
+{
+	assert(self);
+
+	self->timeout_us = timeout_us;
+}
+
+static inline
+void hw_task_set_banned(struct hw_task *self)
+{
+	assert(self);
+
+	self->banned = 1;
+}
+
+static inline
+int hw_task_get_banned(const struct hw_task *self)
+{
+	assert(self);
+
+	return self->banned;
 }
 
 //---------------------------------------------------------------------------------------------
