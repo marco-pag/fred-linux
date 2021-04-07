@@ -63,10 +63,8 @@ int devcfg_drv_fpga_mgr_start_rcfg_(struct devcfg_drv *self, const struct phy_bi
 
 	drv_fpga_mgr = (struct devcfg_drv_fpga_mgr *)self;
 
-	snprintf(addr_str, sizeof (addr_str), "%#lx\n",
-			(long unsigned int)phy_bit_get_addr(phy_bit));
-	snprintf(size_str, sizeof (addr_str), "%lu\n",
-			(long unsigned int)phy_bit_get_size(phy_bit));
+	snprintf(addr_str, sizeof (addr_str), "%#"PRIxPTR"\n", phy_bit_get_addr(phy_bit));
+	snprintf(size_str, sizeof (addr_str), "%zu\n", phy_bit_get_size(phy_bit));
 
 	// Write address
 	retval = write(drv_fpga_mgr->phy_bit_addr_fd, &addr_str, sizeof (addr_str));
@@ -112,7 +110,7 @@ uint64_t devcfg_drv_fpga_mgr_after_rcfg_(struct devcfg_drv *self)
 		return -1;
 	}
 
-	sscanf(rcfg_us_str, "%lld", &rcfg_us);
+	sscanf(rcfg_us_str, "%"PRId64, &rcfg_us);
 
 	return (uint64_t)rcfg_us;
 }

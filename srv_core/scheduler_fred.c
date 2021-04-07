@@ -361,7 +361,7 @@ int sched_fred_slot_complete_(struct scheduler *self, struct accel_req *request_
 	slot_clear_after_compute(slot);
 
 	logger_log(LOG_LEV_FULL,"\tfred_sys: slot: %d of partition: %s"
-							" completed execution of hw-task: %s in %llu us",
+							" completed execution of hw-task: %s in %"PRIu64" us",
 							slot_get_index(slot), partition_get_name(partition),
 							hw_task_get_name(accel_req_get_hw_task(request_done)),
 							exec_time_us);

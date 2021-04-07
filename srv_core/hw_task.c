@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include "hw_task.h"
@@ -173,9 +174,10 @@ void hw_task_print(const struct hw_task *self, char *str, int str_size)
 {
 	assert(self);
 
-	snprintf(str, str_size, "hw-task %d : %s using %d buffers : partition %s",
-				self->hw_id, self->name, self->data_buffs_count,
-				partition_get_name(self->partition));
+	snprintf(str, str_size, "hw-task: %s, id: %u, partition: %s, "
+				"timeout: %"PRIu64" ms, using %d buffers",
+				self->name, self->hw_id, partition_get_name(self->partition),
+				self->timeout_us / 1000, self->data_buffs_count);
 }
 
 int hw_task_init(struct hw_task **self, uint32_t hw_id, const char *name,

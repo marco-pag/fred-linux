@@ -10,13 +10,14 @@
  * (at your option) any later version.
 */
 
-// TODO: old code: replace with a safe parser!
+// TODO: old code: replace with a safer parser!
+
+#include "parser.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "pars.h"
 #include "../utils/dbg_print.h"
 
 #define MAX_LINES 		256

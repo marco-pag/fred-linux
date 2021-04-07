@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <time.h>
 
 #include "../parameters.h"
@@ -36,7 +37,7 @@ do {  \
 		clock_gettime(CLOCK_MONOTONIC, &log_ts_now); \
 		log_tstamp = (log_ts_now.tv_sec * 1000000 + log_ts_now.tv_nsec / 1000) \
 						- fred_log.t_begin; \
-		fprintf(fred_log.stream, "%016llu: "format"\n", log_tstamp, ##__VA_ARGS__); \
+		fprintf(fred_log.stream, "%016"PRIu64": "format"\n", log_tstamp, ##__VA_ARGS__); \
 		fflush(fred_log.stream); \
 	} \
 } while (0)

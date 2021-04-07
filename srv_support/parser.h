@@ -10,8 +10,8 @@
  * (at your option) any later version.
 */
 
-#ifndef PARS_H_
-#define PARS_H_
+#ifndef PARSER_H_
+#define PARSER_H_
 
 struct tokens;
 
@@ -25,4 +25,4 @@ int pars_get_num_tokens(const struct tokens *tokens, int line);
 
 const char *pars_get_token(const struct tokens *tokens, int line, int num);
 
-#endif /* PARS_H_ */
+#endif /* PARSER_H_ */

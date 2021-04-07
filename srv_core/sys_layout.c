@@ -18,8 +18,8 @@
 #include "hw_task.h"
 #include "slot.h"
 #include "slot_timer.h"
-#include "../srv_support/pars.h"
 #include "../parameters.h"
+#include "../srv_support/parser.h"
 #include "../utils/dbg_print.h"
 
 //---------------------------------------------------------------------------------------------
@@ -135,6 +135,7 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 	struct partition *partition = NULL;
 	const char *hw_task_name = NULL;
 	uint32_t hw_task_id;
+	uint32_t hw_task_timout_ms;
 	const char *part_name = NULL;
 	const char *bits_path = NULL;
 	int data_buffs_count;
@@ -142,7 +143,7 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 
 	DBG_PRINT("fred_sys: building hw-tasks\n");
 
-	// Read hw tasks tokens
+	// Read hw-tasks tokens
 	// FRED_PATH is not inserted by the user but chosen at compile time
 	strcpy(hw_tasks_path, FRED_PATH);
 	strncat(hw_tasks_path, hw_tasks_file, sizeof(hw_tasks_path) - strlen(hw_tasks_path) - 1);
@@ -158,17 +159,19 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 		return -1;
 	}
 
-	// Populate hw tasks array
+	// Populate hw-tasks array
 	for (int i = 0; i < self->hw_tasks_count; ++i) {
 
 		// Get hw-task name (first token in the line)
 		hw_task_name = pars_get_token(tokens, i, 0);
 		// Get hw-task id (second token in the line),
 		hw_task_id = str_to_uint32_(pars_get_token(tokens, i, 1));
-		// Get hw-task partition (third token)
-		part_name = pars_get_token(tokens, i, 2);
-		// Get bitstreams sub-path path (fourth token)
-		bits_path = pars_get_token(tokens, i, 3);
+		// Get hw-task timeout in milliseconds (third token in the line),
+		hw_task_timout_ms = str_to_uint32_(pars_get_token(tokens, i, 2));
+		// Get hw-task partition (fourth token)
+		part_name = pars_get_token(tokens, i, 3);
+		// Get bitstreams sub-path path (fifth token)
+		bits_path = pars_get_token(tokens, i, 4);
 
 		// Find partition
 		for (int j = 0; j < self->partitions_count; ++j) {
@@ -185,7 +188,7 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 			return -1;
 		}
 
-		// Initialize hw_task
+		// Initialize hw-task
 		retval = hw_task_init(&self->hw_tasks[i], hw_task_id,
 								hw_task_name, bits_path, partition, self->buffctl);
 		if (retval) {
@@ -194,10 +197,14 @@ static int build_hw_tasks_(struct sys_layout *self, const char *hw_tasks_file)
 			return -1;
 		}
 
+		// Set hw-task timeout
+		if (hw_task_timout_ms != 0)
+			hw_task_set_timeout_us(self->hw_tasks[i], hw_task_timout_ms * 1000);
+
 		// The reminder tokens (after fourth initial tokens) define the buffers
-		data_buffs_count = pars_get_num_tokens(tokens, i) - 4;
+		data_buffs_count = pars_get_num_tokens(tokens, i) - 5;
 		for (int b = 0; b < data_buffs_count; ++b) {
-			data_buff_size = str_to_size_(pars_get_token(tokens, i, b + 4));
+			data_buff_size = str_to_size_(pars_get_token(tokens, i, b + 5));
 			retval = hw_task_add_buffer(self->hw_tasks[i], data_buff_size);
 			if (retval)
 				return -1;
@@ -252,8 +259,8 @@ void sys_layout_print(const struct sys_layout *self)
 {
 	char name[MAX_NAMES];
 
-	DBG_PRINT("------------------------------------ Layout "
-				"------------------------------------\n");
+	DBG_PRINT("----------------------------------------- Layout "
+				"-----------------------------------------\n");
 
 
 	DBG_PRINT("Partitions:\n");
@@ -268,8 +275,8 @@ void sys_layout_print(const struct sys_layout *self)
 		DBG_PRINT("\t%s\n", name);
 	}
 
-	DBG_PRINT("--------------------------------------------"
-				"------------------------------------\n");
+	DBG_PRINT("-------------------------------------------------"
+				"-----------------------------------------\n");
 }
 
 int sys_layout_init(struct sys_layout **self, const struct sys_hw_config *hw_config,

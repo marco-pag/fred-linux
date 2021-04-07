@@ -42,7 +42,7 @@ struct hw_task {
 	int data_buffs_count;
 
 	// Hardware timeout
-	uint32_t timeout_us;
+	uint64_t timeout_us;
 	int banned;
 };
 
@@ -102,7 +102,7 @@ const struct phy_bit *hw_task_get_bit_phy(const struct hw_task *self,
 }
 
 static inline
-uint32_t hw_task_get_timeout_us(const struct hw_task *self)
+uint64_t hw_task_get_timeout_us(const struct hw_task *self)
 {
 	assert(self);
 
@@ -110,7 +110,7 @@ uint32_t hw_task_get_timeout_us(const struct hw_task *self)
 }
 
 static inline
-void hw_task_set_timeout_us(struct hw_task *self, uint32_t timeout_us)
+void hw_task_set_timeout_us(struct hw_task *self, uint64_t timeout_us)
 {
 	assert(self);
 
