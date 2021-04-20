@@ -1,23 +1,23 @@
-bin = fred_server
-srcs = $(wildcard *.c) $(wildcard **/*.c)
-objs = $(srcs:.c=.o)
-deps = $(objs:.o=.d)
+BIN = fred-server
+SRCS = $(wildcard *.c) $(wildcard **/*.c)
+OBJS = $(SRCS:.c=.o)
+DEPS = $(OBJS:.o=.d)
 
-LDFLAGS +=
-CFLAGS += -std=gnu99 -Wall -g #-O2
-CFLAGS += -D LOG_GLOBAL_LEVEL=LOG_LEV_FULL -D HW_TASKS_A64
+CFLAGS += -std=gnu99 -Wall -g
+CPPFLAGS += -D LOG_GLOBAL_LEVEL=LOG_LEV_FULL -D HW_TASKS_A64
 
-$(bin): $(objs)
-	$(CC) -o $@ $^ $(LDFLAGS)
+$(BIN): $(OBJS)
+	$(CC) $^ -o $@ $(LDFLAGS)
 
-# include all dep
--include $(deps)
+# include all dep makefiles generated using the next rule
+-include $(DEPS)
 
-# Build header includes dependencies using c preprocessor
+# Pattern rule for generating makefiles rules based
+# on headers includes dependencies using the C preprocessor
 %.d: %.c
 	$(CPP) $< -MM -MT $(@:.d=.o) > $@
 
 .PHONY: clean
 clean:
-	rm -f $(bin) $(objs) $(deps)
+	rm -f $(BIN) $(OBJS) $(DEPS)
 
