@@ -16,12 +16,7 @@
 #include <unistd.h>
 
 #include "srv_core/fred_sys.h"
-#include "utils/sched_mode.h"
-
-//---------------------------------------------------------------------------------------------
-
-static const char *ARCH_FILE = "arch.csv";
-static const char *HW_TASKS_FILE = "hw_tasks.csv";
+#include "parameters.h"
 
 //---------------------------------------------------------------------------------------------
 
@@ -31,9 +26,6 @@ int main(int argc, char **argv)
 	int opts;
 	struct fred_sys *fred_sys;
 	enum fred_sys_mode mode;
-
-	// Only for testing, to be removed
-	sched_mode_set_fp(0);
 
 	opterr = 0;
 	opts = getopt(argc, argv, "hre");

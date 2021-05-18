@@ -17,9 +17,15 @@
 
 #define LIST_SOCK_PATH			"/tmp/fred_sock"
 
-#define FRED_PATH				"/fredsys/"
+#define FRED_PATH				"/opt/fredsys/"
 
-#define LOG_FILE				"/fredsys/log.txt"
+#define LOG_FILE				"/opt/fredsys/log.txt"
+
+//-------------------------------------------------------------------------------
+
+#define ARCH_FILE				"arch.csv"
+
+#define HW_TASKS_FILE			"hw_tasks.csv"
 
 //-------------------------------------------------------------------------------
 
@@ -60,10 +66,6 @@
 #ifndef LOG_GLOBAL_LEVEL
 #define LOG_GLOBAL_LEVEL LOG_LEV_MUTE
 #endif
-
-//-------------------------------------------------------------------------------
-
-//#define USE_POLL
 
 //-------------------------------------------------------------------------------
 
