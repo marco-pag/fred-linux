@@ -24,15 +24,15 @@ struct accel_req;
 
 struct scheduler {
 
-	int (*push_accel_req)(struct scheduler *self, struct accel_req *request);
+    int (*push_accel_req)(struct scheduler *self, struct accel_req *request);
 
-	int (*rcfg_complete)(struct scheduler *self, struct accel_req *request);
+    int (*rcfg_complete)(struct scheduler *self, struct accel_req *request);
 
-	int (*slot_complete)(struct scheduler *self, struct accel_req *request);
+    int (*slot_complete)(struct scheduler *self, struct accel_req *request);
 
-	int (*slot_timeout)(struct scheduler *self, struct accel_req *request);
+    int (*slot_timeout)(struct scheduler *self, struct accel_req *request);
 
-	void (*free)(struct scheduler *self);
+    void (*free)(struct scheduler *self);
 };
 
 //---------------------------------------------------------------------------------------------
@@ -40,40 +40,40 @@ struct scheduler {
 static inline
 int scheduler_push_accel_req(struct scheduler *self, struct accel_req *request)
 {
-	assert(self);
+    assert(self);
 
-	return self->push_accel_req(self, request);
+    return self->push_accel_req(self, request);
 }
 
 static inline
 int scheduler_rcfg_complete(struct scheduler *self, struct accel_req *request)
 {
-	assert(self);
+    assert(self);
 
-	return self->rcfg_complete(self, request);
+    return self->rcfg_complete(self, request);
 }
 
 static inline
 int scheduler_slot_complete(struct scheduler *self, struct accel_req *request)
 {
-	assert(self);
+    assert(self);
 
-	return self->slot_complete(self, request);
+    return self->slot_complete(self, request);
 }
 
 static inline
 int scheduler_slot_timeout(struct scheduler *self, struct accel_req *request)
 {
-	assert(self);
+    assert(self);
 
-	return self->slot_timeout(self, request);
+    return self->slot_timeout(self, request);
 }
 
 static inline
 void scheduler_free(struct scheduler *self)
 {
-	if (self)
-		self->free(self);
+    if (self)
+        self->free(self);
 }
 
 //---------------------------------------------------------------------------------------------

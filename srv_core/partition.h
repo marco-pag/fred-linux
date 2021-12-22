@@ -29,14 +29,14 @@ struct slot;
 //---------------------------------------------------------------------------------------------
 
 struct partition {
-	char name[MAX_NAMES];
-	int index;
+    char name[MAX_NAMES];
+    int index;
 
-	struct slot *slots[MAX_SLOTS];
-	int slots_count;
+    struct slot *slots[MAX_SLOTS];
+    int slots_count;
 
-	// One execution timer per slot
-	struct slot_timer *timers[MAX_SLOTS];
+    // One execution timer per slot
+    struct slot_timer *timers[MAX_SLOTS];
 };
 
 //---------------------------------------------------------------------------------------------
@@ -44,25 +44,25 @@ struct partition {
 static inline
 const char* partition_get_name(const struct partition *self)
 {
-	assert(self);
+    assert(self);
 
-	return self->name;
+    return self->name;
 }
 
 static inline
 int partition_get_index(const struct partition *self)
 {
-	assert(self);
+    assert(self);
 
-	return self->index;
+    return self->index;
 }
 
 static inline
 int partition_get_slots_count(const struct partition *self)
 {
-	assert(self);
+    assert(self);
 
-	return self->slots_count;
+    return self->slots_count;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -78,11 +78,11 @@ int partition_add_slot(struct partition *self, struct slot *slot, struct slot_ti
 // If all slots are occupied set slot pointer to null
 // if no reconfiguration required return 0, otherwise 1
 int partition_search_slot(struct partition *self, struct slot **slot,
-							struct slot_timer **timer, const struct hw_task *hw_task);
+                            struct slot_timer **timer, const struct hw_task *hw_task);
 
 // Pick a random slot among the slots that are free (for testing proposes)
 int partition_search_random_slot(struct partition *self, struct slot **slot,
-									struct slot_timer **timer, const struct hw_task *hw_task);
+                                    struct slot_timer **timer, const struct hw_task *hw_task);
 
 int partiton_register_slots(struct partition *self, struct reactor *reactor);
 

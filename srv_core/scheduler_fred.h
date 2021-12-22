@@ -22,28 +22,28 @@
 
 
 enum sched_fred_mode {
-	SCHED_FRED_NORMAL,
-	SCHED_FRED_ALWAYS_RCFG
+    SCHED_FRED_NORMAL,
+    SCHED_FRED_ALWAYS_RCFG
 };
 
 //---------------------------------------------------------------------------------------------
 
 struct scheduler_fred {
-	// ------------------------//
-	struct scheduler scheduler;
-	// ------------------------//
+    // ------------------------//
+    struct scheduler scheduler;
+    // ------------------------//
 
-	enum sched_fred_mode mode;
+    enum sched_fred_mode mode;
 
-	// Partitions queues heads
-	struct accel_req_queue part_queues_heads[MAX_PARTITIONS];
+    // Partitions queues heads
+    struct accel_req_queue part_queues_heads[MAX_PARTITIONS];
 
-	// Reconfiguration device queue
-	// Partition queue head
-	struct accel_req_queue fri_queue_head;
+    // Reconfiguration device queue
+    // Partition queue head
+    struct accel_req_queue fri_queue_head;
 
-	// Reconfiguration device
-	struct devcfg *devcfg;
+    // Reconfiguration device
+    struct devcfg *devcfg;
 };
 
 

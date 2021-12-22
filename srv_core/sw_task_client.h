@@ -23,37 +23,37 @@
 //---------------------------------------------------------------------------------------------
 
 struct sw_task_client {
-	// ------------------------//
-	struct event_handler handler; 				// Handler interface
-	// ------------------------//
+    // ------------------------//
+    struct event_handler handler;               // Handler interface
+    // ------------------------//
 
-	int conn_sock;								// Handle
+    int conn_sock;                              // Handle
 
-	enum sw_task_client_state {
-		CLIENT_EMPTY,
-		CLIENT_READY,
-		CLIENT_BUSY
-	} state;
+    enum sw_task_client_state {
+        CLIENT_EMPTY,
+        CLIENT_READY,
+        CLIENT_BUSY
+    } state;
 
-	struct hw_task *hw_tasks[MAX_HW_TASKS];		// Associated hw-tasks
-	int hw_tasks_count;
+    struct hw_task *hw_tasks[MAX_HW_TASKS];     // Associated hw-tasks
+    int hw_tasks_count;
 
-	// And data buffers (one set for each hw-task)
-	struct fred_buff_if *data_buffs_ifs[MAX_HW_TASKS][MAX_DATA_BUFFS];
+    // And data buffers (one set for each hw-task)
+    struct fred_buff_if *data_buffs_ifs[MAX_HW_TASKS][MAX_DATA_BUFFS];
 
-	struct scheduler *scheduler;				// Scheduler state machine
-	struct sys_layout *sys;						// System layout
+    struct scheduler *scheduler;                // Scheduler state machine
+    struct sys_layout *sys;                     // System layout
 
-	buffctl_ft *buffctl;						// To allocate buffers (not owning)
+    buffctl_ft *buffctl;                        // To allocate buffers (not owning)
 
-	struct accel_req accel_req;					// Max *one* request at time no
-												// need to allocate dynamically
+    struct accel_req accel_req;                 // Max *one* request at time no
+                                                // need to allocate dynamically
 };
 
 //---------------------------------------------------------------------------------------------
 
 int sw_task_client_init(struct event_handler **self, int list_sock, struct sys_layout *sys,
-						struct scheduler *scheduler, buffctl_ft *buffctl);
+                        struct scheduler *scheduler, buffctl_ft *buffctl);
 
 //---------------------------------------------------------------------------------------------
 

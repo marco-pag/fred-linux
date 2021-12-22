@@ -37,10 +37,10 @@
 /*******************************************************************************/
 
 struct fred_buff_if {
-	uint32_t id;
-	size_t length;
-	uintptr_t phy_addr;
-	char dev_name[FB_DEVN_SIZE];
+    uint32_t id;
+    size_t length;
+    uintptr_t phy_addr;
+    char dev_name[FB_DEVN_SIZE];
 };
 
 /*******************************************************************************/
@@ -48,8 +48,8 @@ struct fred_buff_if {
 /* Magic number for IOCTL commands */
 #define FRED_BUFFCTL_MAGIC 0x7f
 
-#define FRED_BUFFCTL_ALLOC	_IOWR(FRED_BUFFCTL_MAGIC, 1 , struct fred_buff_if)
-#define FRED_BUFFCTL_FREE	_IOW(FRED_BUFFCTL_MAGIC, 2 , uint32_t)
+#define FRED_BUFFCTL_ALLOC  _IOWR(FRED_BUFFCTL_MAGIC, 1 , struct fred_buff_if)
+#define FRED_BUFFCTL_FREE   _IOW(FRED_BUFFCTL_MAGIC, 2 , uint32_t)
 
 /*******************************************************************************/
 
@@ -57,25 +57,25 @@ struct fred_buff_if {
 static inline
 uint32_t fred_buff_if_get_id(const struct fred_buff_if *self)
 {
-	return self->id;
+    return self->id;
 }
 
 static inline
 size_t fred_buff_if_get_lenght(const struct fred_buff_if *self)
 {
-	return self->length;
+    return self->length;
 }
 
 static inline
 uintptr_t fred_buff_if_get_phy_addr(const struct fred_buff_if *self)
 {
-	return self->phy_addr;
+    return self->phy_addr;
 }
 
 static inline
 const char *fred_buff_if_get_name(const struct fred_buff_if *self)
 {
-	return self->dev_name;
+    return self->dev_name;
 }
 #endif
 

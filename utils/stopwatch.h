@@ -19,34 +19,34 @@
 typedef struct stopwatch_ stopwatch;
 
 struct stopwatch_ {
-	struct timespec t_start;
-	struct timespec t_stop;
+    struct timespec t_start;
+    struct timespec t_stop;
 };
 
 static inline
 void stopwatch_start(stopwatch *watch)
 {
-	clock_gettime(CLOCK_MONOTONIC, &watch->t_start);
+    clock_gettime(CLOCK_MONOTONIC, &watch->t_start);
 }
 
 static inline
 void stopwatch_stop(stopwatch *watch)
 {
-	clock_gettime(CLOCK_MONOTONIC, &watch->t_stop);
+    clock_gettime(CLOCK_MONOTONIC, &watch->t_stop);
 }
 
 static inline
 uint64_t stopwatch_get_ms(stopwatch *watch)
 {
-	return	((watch->t_stop.tv_sec - watch->t_start.tv_sec) * 1000) +
-			((watch->t_stop.tv_nsec - watch->t_start.tv_nsec) / 1000000);
+    return  ((watch->t_stop.tv_sec - watch->t_start.tv_sec) * 1000) +
+            ((watch->t_stop.tv_nsec - watch->t_start.tv_nsec) / 1000000);
 }
 
 static inline
 uint64_t stopwatch_get_us(stopwatch *watch)
 {
-	return	((watch->t_stop.tv_sec - watch->t_start.tv_sec) * 1000) +
-			((watch->t_stop.tv_nsec - watch->t_start.tv_nsec) / 1000);
+    return  ((watch->t_stop.tv_sec - watch->t_start.tv_sec) * 1000) +
+            ((watch->t_stop.tv_nsec - watch->t_start.tv_nsec) / 1000);
 }
 
 

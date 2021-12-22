@@ -27,25 +27,25 @@ logger fred_log;
 
 int logger_init()
 {
-	struct timespec ts_now;
+    struct timespec ts_now;
 
-	fred_log.stream = fopen(LOG_FILE, "w");
-	if (!fred_log.stream) {
-		ERROR_PRINT("fred_log: error while opening log file");
-		return -1;
-	}
+    fred_log.stream = fopen(LOG_FILE, "w");
+    if (!fred_log.stream) {
+        ERROR_PRINT("fred_log: error while opening log file");
+        return -1;
+    }
 
-	clock_gettime(CLOCK_MONOTONIC, &ts_now);
-	fred_log.t_begin = ts_now.tv_sec * 1000000 + ts_now.tv_nsec / 1000;
-	fred_log.state = LOG_OPEN;
+    clock_gettime(CLOCK_MONOTONIC, &ts_now);
+    fred_log.t_begin = ts_now.tv_sec * 1000000 + ts_now.tv_nsec / 1000;
+    fred_log.state = LOG_OPEN;
 
-	return 0;
+    return 0;
 }
 
 void logger_free()
 {
-	if (fred_log.state == LOG_CLOSE)
-		return;
+    if (fred_log.state == LOG_CLOSE)
+        return;
 
-	fclose(fred_log.stream);
+    fclose(fred_log.stream);
 }

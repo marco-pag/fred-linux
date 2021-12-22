@@ -15,51 +15,51 @@
 
 //-------------------------------------------------------------------------------
 
-#define LIST_SOCK_PATH			"/tmp/fred_sock"
+#define LIST_SOCK_PATH          "/tmp/fred_sock"
 
-#define FRED_PATH				"/opt/fredsys/"
+#define FRED_PATH               "/opt/fredsys/"
 
-#define LOG_FILE				"/opt/fredsys/log.txt"
-
-//-------------------------------------------------------------------------------
-
-#define ARCH_FILE				"arch.csv"
-
-#define HW_TASKS_FILE			"hw_tasks.csv"
+#define LOG_FILE                "/opt/fredsys/log.txt"
 
 //-------------------------------------------------------------------------------
 
-#define MAX_SW_TASKS			1024
+#define ARCH_FILE               "arch.csv"
+
+#define HW_TASKS_FILE           "hw_tasks.csv"
 
 //-------------------------------------------------------------------------------
 
-#define MAX_HW_TASKS			128
-
-#define HW_OP_ARGS_SIZE			8
-
-#define MAX_DATA_BUFFS			HW_OP_ARGS_SIZE
+#define MAX_SW_TASKS            1024
 
 //-------------------------------------------------------------------------------
 
-#define MAX_SLOTS				64
+#define MAX_HW_TASKS            128
 
-#define MAX_PARTITIONS			32
+#define HW_OP_ARGS_SIZE         8
 
-//-------------------------------------------------------------------------------
-
-#define MAX_NAMES				128
-
-#define MAX_PATH				1024
+#define MAX_DATA_BUFFS          HW_OP_ARGS_SIZE
 
 //-------------------------------------------------------------------------------
 
-#define MAX_EVENTS_SRCS 		(MAX_SLOTS * MAX_PARTITIONS + MAX_SW_TASKS + 1)
+#define MAX_SLOTS               64
+
+#define MAX_PARTITIONS          32
 
 //-------------------------------------------------------------------------------
 
-#define DEF_HW_TASK_TIMEOUT_US	(10 * 1000 * 1000)
+#define MAX_NAMES               128
 
-#define SIG_HW_TASK_TIMEOUT		SIGRTMIN
+#define MAX_PATH                1024
+
+//-------------------------------------------------------------------------------
+
+#define MAX_EVENTS_SRCS         (MAX_SLOTS * MAX_PARTITIONS + MAX_SW_TASKS + 1)
+
+//-------------------------------------------------------------------------------
+
+#define DEF_HW_TASK_TIMEOUT_US  (10 * 1000 * 1000)
+
+#define SIG_HW_TASK_TIMEOUT     SIGRTMIN
 
 //-------------------------------------------------------------------------------
 

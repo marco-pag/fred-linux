@@ -25,16 +25,16 @@
 //---------------------------------------------------------------------------------------------
 
 struct slot_timer {
-	// ------------------------//
-	struct event_handler handler;	// Handler interface
-	// ------------------------//
+    // ------------------------//
+    struct event_handler handler;   // Handler interface
+    // ------------------------//
 
-	struct fd_timer fd_timer;		// Handle
+    struct fd_timer fd_timer;       // Handle
 
-	// Current executing request
-	struct accel_req *exec_req;
+    // Current executing request
+    struct accel_req *exec_req;
 
-	struct scheduler *scheduler;
+    struct scheduler *scheduler;
 };
 
 //---------------------------------------------------------------------------------------------
@@ -42,9 +42,9 @@ struct slot_timer {
 static inline
 struct event_handler *slot_timer_get_event_handler(struct slot_timer *self)
 {
-	assert(self);
+    assert(self);
 
-	return &self->handler;
+    return &self->handler;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -52,33 +52,33 @@ struct event_handler *slot_timer_get_event_handler(struct slot_timer *self)
 static inline
 int slot_timer_arm(struct slot_timer *self, uint64_t duration_us, struct accel_req *exec_req)
 {
-	assert(self);
-	assert(exec_req);
+    assert(self);
+    assert(exec_req);
 
-	self->exec_req = exec_req;
+    self->exec_req = exec_req;
 
-	return fd_timer_arm(&self->fd_timer, duration_us);
+    return fd_timer_arm(&self->fd_timer, duration_us);
 }
 
 static inline
 int slot_timer_disarm(struct slot_timer *self, uint64_t *elapsed_us)
 {
-	int retval;
+    int retval;
 
-	assert(self);
-	assert(elapsed_us);
+    assert(self);
+    assert(elapsed_us);
 
-	self->exec_req = NULL;
+    self->exec_req = NULL;
 
-	retval = fd_timer_get_elapsed_us(&self->fd_timer, elapsed_us);
-	if (retval)
-		return -1;
+    retval = fd_timer_get_elapsed_us(&self->fd_timer, elapsed_us);
+    if (retval)
+        return -1;
 
-	retval = fd_timer_disarm(&self->fd_timer);
-	if (retval)
-		return -1;
+    retval = fd_timer_disarm(&self->fd_timer);
+    if (retval)
+        return -1;
 
-	return 0;
+    return 0;
 }
 
 //---------------------------------------------------------------------------------------------

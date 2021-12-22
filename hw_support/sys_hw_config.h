@@ -16,20 +16,20 @@
 //---------------------------------------------------------------------------------------------
 
 enum sys_slot_type {
-	SYS_SLOT_NULL,
-	SYS_SLOT_MASTER
+    SYS_SLOT_NULL,
+    SYS_SLOT_MASTER
 };
 
 enum sys_devcfg_type {
-	SYS_DEVCFG_NULL,
-	SYS_DEVCFG_FPGA_MGR
+    SYS_DEVCFG_NULL,
+    SYS_DEVCFG_FPGA_MGR
 };
 
 //---------------------------------------------------------------------------------------------
 
 struct sys_hw_config {
-	enum sys_slot_type slot_type;
-	enum sys_devcfg_type devcfg_type;
+    enum sys_slot_type slot_type;
+    enum sys_devcfg_type devcfg_type;
 };
 
 //---------------------------------------------------------------------------------------------
@@ -37,27 +37,27 @@ struct sys_hw_config {
 static inline
 enum sys_slot_type sys_hw_config_get_slot_type(const struct sys_hw_config *self)
 {
-	return self->slot_type;
+    return self->slot_type;
 }
 
 static inline
 void sys_hw_config_set_slot_type(struct sys_hw_config *self,
-									enum sys_slot_type slot_type)
+                                    enum sys_slot_type slot_type)
 {
-	self->slot_type = slot_type;
+    self->slot_type = slot_type;
 }
 
 static inline
 enum sys_devcfg_type sys_hw_config_get_devcfg_type(const struct sys_hw_config *self)
 {
-	return self->devcfg_type;
+    return self->devcfg_type;
 }
 
 static inline
 void sys_hw_config_set_devcfg_type(struct sys_hw_config *self,
-									enum sys_devcfg_type devcfg_type)
+                                    enum sys_devcfg_type devcfg_type)
 {
-	self->devcfg_type = devcfg_type;
+    self->devcfg_type = devcfg_type;
 }
 
 //---------------------------------------------------------------------------------------------

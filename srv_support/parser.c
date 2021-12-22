@@ -20,161 +20,161 @@
 
 #include "../utils/dbg_print.h"
 
-#define MAX_LINES 		256
-#define MAX_TOKENS		64
-#define MAX_TOKEN_LEN	256
+#define MAX_LINES       256
+#define MAX_TOKENS      64
+#define MAX_TOKEN_LEN   256
 
 const char seps[] = " ,\t\n";
 const char comm = '#';
 
 struct tokens {
-	char **lines_tokens[MAX_LINES];		// Arrays
-	int tokens_count[MAX_LINES];		// Tokens for each line (opt)
-	int lines_count;					// Numbers of lines (opt)
+    char **lines_tokens[MAX_LINES];     // Arrays
+    int tokens_count[MAX_LINES];        // Tokens for each line (opt)
+    int lines_count;                    // Numbers of lines (opt)
 };
 
 // The line will be modified
 static int tokenize_line_(struct tokens *tokens, char *line)
 {
-	char *saveptr;
-	char *token;
-	char *lineptr = line;
-	int t_count = 0;
+    char *saveptr;
+    char *token;
+    char *lineptr = line;
+    int t_count = 0;
 
-	if (!tokens || !line)
-		return -1;
+    if (!tokens || !line)
+        return -1;
 
-	// Remove newline
-	line[strcspn(line, "\n")] = 0;
-	// Get first token to check if the line is a comment
-	token = strtok_r(lineptr, seps, &saveptr);
-	if (!token || token[0] == comm)
-		return 0;
+    // Remove newline
+    line[strcspn(line, "\n")] = 0;
+    // Get first token to check if the line is a comment
+    token = strtok_r(lineptr, seps, &saveptr);
+    if (!token || token[0] == comm)
+        return 0;
 
-	// Allocate a new line
-	tokens->lines_tokens[tokens->lines_count] = calloc(MAX_TOKENS, sizeof(char *));
-	if (!tokens->lines_tokens[tokens->lines_count])
-		return -1;
+    // Allocate a new line
+    tokens->lines_tokens[tokens->lines_count] = calloc(MAX_TOKENS, sizeof(char *));
+    if (!tokens->lines_tokens[tokens->lines_count])
+        return -1;
 
-	// And get all others token
-	while (token) {
-		// Allocate and save a new token
-		tokens->lines_tokens[tokens->lines_count][t_count] = strndup(token, MAX_TOKEN_LEN);
-		if (!tokens->lines_tokens[tokens->lines_count][t_count])
-			return -1;
+    // And get all others token
+    while (token) {
+        // Allocate and save a new token
+        tokens->lines_tokens[tokens->lines_count][t_count] = strndup(token, MAX_TOKEN_LEN);
+        if (!tokens->lines_tokens[tokens->lines_count][t_count])
+            return -1;
 
-		// Update line tokens counter
-		t_count++;
+        // Update line tokens counter
+        t_count++;
 
-		// Next token
-		lineptr = saveptr;
-		token = strtok_r(lineptr, seps, &saveptr);
-	}
+        // Next token
+        lineptr = saveptr;
+        token = strtok_r(lineptr, seps, &saveptr);
+    }
 
-	// Update line and token counters
-	tokens->tokens_count[tokens->lines_count] = t_count;
-	tokens->lines_count++;
+    // Update line and token counters
+    tokens->tokens_count[tokens->lines_count] = t_count;
+    tokens->lines_count++;
 
-	return 0;
+    return 0;
 }
 
 static int parse_file_(struct tokens *tokens, const char filename[])
 {
-	FILE *file_p;
-	char *line = NULL;
-	size_t line_len = 0;
-	int retval = 0;
+    FILE *file_p;
+    char *line = NULL;
+    size_t line_len = 0;
+    int retval = 0;
 
-	tokens->lines_count = 0;
+    tokens->lines_count = 0;
 
-	DBG_PRINT("fred_sys: pars: parsing file: %s\n", filename);
+    DBG_PRINT("fred_sys: pars: parsing file: %s\n", filename);
 
-	file_p = fopen(filename, "r");
-	if (!file_p) {
-		ERROR_PRINT("fred_sys: pars: error while opening file: %s\n", filename);
-		return -1;
-	}
+    file_p = fopen(filename, "r");
+    if (!file_p) {
+        ERROR_PRINT("fred_sys: pars: error while opening file: %s\n", filename);
+        return -1;
+    }
 
-	while (getline(&line, &line_len, file_p) != -1) {
-		if (tokenize_line_(tokens, line) != 0) {
-			ERROR_PRINT("fred_sys: pars: error while parsing file: %s at line: %d\n",
-					filename, tokens->lines_count);
-			retval = -1;
-			break;
-		}
-	}
+    while (getline(&line, &line_len, file_p) != -1) {
+        if (tokenize_line_(tokens, line) != 0) {
+            ERROR_PRINT("fred_sys: pars: error while parsing file: %s at line: %d\n",
+                    filename, tokens->lines_count);
+            retval = -1;
+            break;
+        }
+    }
 
-	fclose(file_p);
-	if (line)
-		free(line);
+    fclose(file_p);
+    if (line)
+        free(line);
 
-	return retval;
+    return retval;
 }
 
 static void free_tokens_(struct tokens *tokens)
 {
-	// For each line
-	for (int l = 0; tokens->lines_tokens[l] && l < MAX_LINES; ++l) {
+    // For each line
+    for (int l = 0; tokens->lines_tokens[l] && l < MAX_LINES; ++l) {
 
-		// For each token in the line
-		for (int t = 0; tokens->lines_tokens[l][t] && t < MAX_TOKENS; ++t) {
+        // For each token in the line
+        for (int t = 0; tokens->lines_tokens[l][t] && t < MAX_TOKENS; ++t) {
 
-			// Free token string
-			free(tokens->lines_tokens[l][t]);
-		}
+            // Free token string
+            free(tokens->lines_tokens[l][t]);
+        }
 
-		// Free the line of token
-		free(tokens->lines_tokens[l]);
-	}
+        // Free the line of token
+        free(tokens->lines_tokens[l]);
+    }
 }
 
 //---------------------------------------------------------------------------//
 
 int pars_tokenize(struct tokens **tokens, const char file_name[])
 {
-	int retval;
+    int retval;
 
-	*tokens = calloc(1, sizeof(**tokens));
-	if (!(*tokens))
-		return -1;
+    *tokens = calloc(1, sizeof(**tokens));
+    if (!(*tokens))
+        return -1;
 
-	retval = parse_file_(*tokens, file_name);
+    retval = parse_file_(*tokens, file_name);
 
-	if (retval != 0)
-		free_tokens_(*tokens);
+    if (retval != 0)
+        free_tokens_(*tokens);
 
-	return retval;
+    return retval;
 
 }
 
 void pars_free_tokens(struct tokens *tokens)
 {
-	if (!tokens)
-		return;
+    if (!tokens)
+        return;
 
-	// Set zero for debug
-	free_tokens_(tokens);
+    // Set zero for debug
+    free_tokens_(tokens);
 
-	free(tokens);
+    free(tokens);
 }
 
 int pars_get_num_lines(const struct tokens *tokens)
 {
-	return tokens->lines_count;
+    return tokens->lines_count;
 }
 
 int pars_get_num_tokens(const struct tokens *tokens, int line)
 {
-	if (line >= tokens->lines_count)
-		return 0;
+    if (line >= tokens->lines_count)
+        return 0;
 
-	return tokens->tokens_count[line];
+    return tokens->tokens_count[line];
 }
 
 const char *pars_get_token(const struct tokens *tokens, int line, int num)
 {
-	if (line >= tokens->lines_count || num >= tokens->tokens_count[line])
-		return NULL;
+    if (line >= tokens->lines_count || num >= tokens->tokens_count[line])
+        return NULL;
 
-	return tokens->lines_tokens[line][num];
+    return tokens->lines_tokens[line][num];
 }

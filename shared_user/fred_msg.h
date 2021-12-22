@@ -18,23 +18,23 @@
 //-------------------------------------------------------------------------------
 
 enum msg_head_ {
-	// Client requests
-	FRED_MSG_INIT		= 101,
-	FRED_MSG_BIND		= 201,
-	FRED_MSG_RUN		= 301,
-	// Server Replies
-	FRED_MSG_DONE		= 401,
-	FRED_MSG_OVERRUN	= 402,
-	FRED_MSG_ACK		= 501,
-	FRED_MSG_BUFFS		= 601,
-	FRED_MSG_ERROR		= 701,	// Client request error
-	// Server notices
-	FRED_MSG_CRIT		= 801,	// Server internal error
+    // Client requests
+    FRED_MSG_INIT       = 101,
+    FRED_MSG_BIND       = 201,
+    FRED_MSG_RUN        = 301,
+    // Server Replies
+    FRED_MSG_DONE       = 401,
+    FRED_MSG_OVERRUN    = 402,
+    FRED_MSG_ACK        = 501,
+    FRED_MSG_BUFFS      = 601,
+    FRED_MSG_ERROR      = 701,  // Client request error
+    // Server notices
+    FRED_MSG_CRIT       = 801,  // Server internal error
 };
 
 struct fred_msg {
-	enum msg_head_ head;
-	uint32_t arg;
+    enum msg_head_ head;
+    uint32_t arg;
 };
 
 //-------------------------------------------------------------------------------
@@ -42,25 +42,25 @@ struct fred_msg {
 static inline
 int fred_msg_get_head(const struct fred_msg *msg)
 {
-	return msg->head;
+    return msg->head;
 }
 
 static inline
 void fred_msg_set_head(struct fred_msg *msg, int head)
 {
-	msg->head = head;
+    msg->head = head;
 }
 
 static inline
 uint32_t fred_msg_get_arg(const struct fred_msg *msg)
 {
-	return msg->arg;
+    return msg->arg;
 }
 
 static inline
 void fred_msg_set_arg(struct fred_msg *msg, uint32_t arg)
 {
-	msg->arg = arg;
+    msg->arg = arg;
 }
 
 //-------------------------------------------------------------------------------

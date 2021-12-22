@@ -21,89 +21,89 @@
 //---------------------------------------------------------------------------------------------
 
 #define REG_WRITE(BaseAddress, RegOffset, Data) \
-    *(volatile unsigned int *)((BaseAddress) + (RegOffset)) = (unsigned int)(Data)
+                *(volatile unsigned int *)((BaseAddress) + (RegOffset)) = (unsigned int)(Data)
 
 #define REG_READ(BaseAddress, RegOffset) \
-    *(volatile unsigned int *)((BaseAddress) + (RegOffset))
+                *(volatile unsigned int *)((BaseAddress) + (RegOffset))
 
 //---------------------------------------------------------------------------------------------
 
 void decoup_drv_xil_decouple_(struct decoup_drv *self)
 {
-	struct decoup_drv_xil *xil_dev_drv;
-	uintptr_t base_addr;
+    struct decoup_drv_xil *xil_dev_drv;
+    uintptr_t base_addr;
 
-	assert(self);
+    assert(self);
 
-	xil_dev_drv = (struct decoup_drv_xil *)self;
+    xil_dev_drv = (struct decoup_drv_xil *)self;
 
-	base_addr = uio_get_base_addr(xil_dev_drv->uio_dev);
+    base_addr = uio_get_base_addr(xil_dev_drv->uio_dev);
 
-	// Enable slot decoupler (decouple reconfigurable slot)
-	REG_WRITE(base_addr, 0, 1);
+    // Enable slot decoupler (decouple reconfigurable slot)
+    REG_WRITE(base_addr, 0, 1);
 
-	assert(REG_READ(base_addr, 0) == 1);
+    assert(REG_READ(base_addr, 0) == 1);
 }
 
 void decoup_drv_xil_couple_(struct decoup_drv *self)
 {
-	struct decoup_drv_xil *xil_dev_drv;
-	uintptr_t base_addr;
+    struct decoup_drv_xil *xil_dev_drv;
+    uintptr_t base_addr;
 
-	assert(self);
+    assert(self);
 
-	xil_dev_drv = (struct decoup_drv_xil *)self;
+    xil_dev_drv = (struct decoup_drv_xil *)self;
 
-	base_addr = uio_get_base_addr(xil_dev_drv->uio_dev);
+    base_addr = uio_get_base_addr(xil_dev_drv->uio_dev);
 
-	// Disable slot decoupler
-	REG_WRITE(base_addr, 0, 0);
+    // Disable slot decoupler
+    REG_WRITE(base_addr, 0, 0);
 
-	assert(REG_READ(base_addr, 0) == 0);
+    assert(REG_READ(base_addr, 0) == 0);
 }
 
 void decoup_drv_xil_free_(struct decoup_drv *self)
 {
-	struct decoup_drv_xil *xil_dev_drv;
+    struct decoup_drv_xil *xil_dev_drv;
 
-	if(!self)
-		return;
+    if(!self)
+        return;
 
-	xil_dev_drv = (struct decoup_drv_xil *)self;
+    xil_dev_drv = (struct decoup_drv_xil *)self;
 
-	uio_dev_free(xil_dev_drv->uio_dev);
+    uio_dev_free(xil_dev_drv->uio_dev);
 
-	free(xil_dev_drv);
+    free(xil_dev_drv);
 }
 
 //---------------------------------------------------------------------------------------------
 
 int decoup_drv_xil_init(struct decoup_drv **self, const char *dev_name)
 {
-	struct decoup_drv_xil *xil_dev_drv;
-	int retval;
+    struct decoup_drv_xil *xil_dev_drv;
+    int retval;
 
-	assert(self);
+    assert(self);
 
-	*self = NULL;
+    *self = NULL;
 
-	xil_dev_drv = calloc(1, sizeof(*xil_dev_drv));
-	if (!xil_dev_drv)
-		return -1;
+    xil_dev_drv = calloc(1, sizeof(*xil_dev_drv));
+    if (!xil_dev_drv)
+        return -1;
 
-	// Decoupler interface
-	xil_dev_drv->decoup_drv.decouple = decoup_drv_xil_decouple_;
-	xil_dev_drv->decoup_drv.couple = decoup_drv_xil_couple_;
-	xil_dev_drv->decoup_drv.free = decoup_drv_xil_free_;
+    // Decoupler interface
+    xil_dev_drv->decoup_drv.decouple = decoup_drv_xil_decouple_;
+    xil_dev_drv->decoup_drv.couple = decoup_drv_xil_couple_;
+    xil_dev_drv->decoup_drv.free = decoup_drv_xil_free_;
 
-	// Initialize UIO component
-	retval = uio_dev_init(&xil_dev_drv->uio_dev, dev_name);
-	if (retval) {
-		free(xil_dev_drv);
-		return -1;
-	}
+    // Initialize UIO component
+    retval = uio_dev_init(&xil_dev_drv->uio_dev, dev_name);
+    if (retval) {
+        free(xil_dev_drv);
+        return -1;
+    }
 
-	*self = &xil_dev_drv->decoup_drv;
+    *self = &xil_dev_drv->decoup_drv;
 
-	return 0;
+    return 0;
 }

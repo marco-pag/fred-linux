@@ -21,59 +21,59 @@
 
 int fd_utils_create_socket_pair(int *fd_0, int *fd_1)
 {
-	int retval;
-	int fds[2];
+    int retval;
+    int fds[2];
 
-	retval = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
-	if (retval)
-		return -1;
+    retval = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
+    if (retval)
+        return -1;
 
-	*fd_0 = fds[0];
-	*fd_1 = fds[1];
+    *fd_0 = fds[0];
+    *fd_1 = fds[1];
 
-	return 0;
+    return 0;
 }
 
 int fd_utils_byte_write(int fd)
 {
-	int retval;
-	char data = 'a';
+    int retval;
+    char data = 'a';
 
-	retval = write(fd, &data, sizeof(data));
-	if (retval != 1)
-		return -1;
+    retval = write(fd, &data, sizeof(data));
+    if (retval != 1)
+        return -1;
 
-	return 0;
+    return 0;
 }
 
 int fd_utils_byte_read(int fd)
 {
-	int retval;
-	char data;
+    int retval;
+    char data;
 
-	retval = read(fd, &data, sizeof(data));
-	if (retval != 1)
-		return -1;
+    retval = read(fd, &data, sizeof(data));
+    if (retval != 1)
+        return -1;
 
-	return 0;
+    return 0;
 }
 
 int fd_utils_set_fd_nonblock(int fd)
 {
-	int flags;
-	int retval;
+    int flags;
+    int retval;
 
-	if (fd < 0)
-		return -1;
+    if (fd < 0)
+        return -1;
 
-	flags = fcntl(fd, F_GETFL, 0);
-	if (flags < 0)
-		return -1;
+    flags = fcntl(fd, F_GETFL, 0);
+    if (flags < 0)
+        return -1;
 
-	flags |= O_NONBLOCK;
-	retval = fcntl(fd, F_SETFL, flags);
-	if (retval < 0)
-		return -1;
+    flags |= O_NONBLOCK;
+    retval = fcntl(fd, F_SETFL, flags);
+    if (retval < 0)
+        return -1;
 
-	return 0;
+    return 0;
 }

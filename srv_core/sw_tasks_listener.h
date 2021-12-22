@@ -24,24 +24,24 @@
 //---------------------------------------------------------------------------------------------
 
 struct sw_tasks_listener {
-	// ------------------------//
-	struct event_handler handler; 	// Handler interface
-	// ------------------------//
+    // ------------------------//
+    struct event_handler handler;   // Handler interface
+    // ------------------------//
 
-	int list_sock;					// Handle
+    int list_sock;                  // Handle
 
-	struct reactor *reactor;		// To add event handler for new client
+    struct reactor *reactor;        // To add event handler for new client
 
-	struct scheduler *scheduler;	// To be passed to the client
-	struct sys_layout *sys;
-	buffctl_ft *buffctl;
+    struct scheduler *scheduler;    // To be passed to the client
+    struct sys_layout *sys;
+    buffctl_ft *buffctl;
 };
 
 //---------------------------------------------------------------------------------------------
 
 int sw_tasks_listener_init(struct event_handler **self, struct sys_layout *sys,
-							struct reactor *reactor, struct scheduler *scheduler,
-							buffctl_ft *buffctl);
+                            struct reactor *reactor, struct scheduler *scheduler,
+                            buffctl_ft *buffctl);
 
 //---------------------------------------------------------------------------------------------
 

@@ -21,19 +21,19 @@
 
 // Simple -single map- UIO device
 struct uio_dev {
-	// Device tree name and UIO number
-	// UIO name: (uio<num>)
-	uint32_t uio_num;
-	char dt_name[MAX_NAMES];
+    // Device tree name and UIO number
+    // UIO name: (uio<num>)
+    uint32_t uio_num;
+    char dt_name[MAX_NAMES];
 
-	// Device registers
-	uintptr_t regs_addr;
-	size_t regs_size;
+    // Device registers
+    uintptr_t regs_addr;
+    size_t regs_size;
 
-	// UIO device fd (when opened)
-	int uio_fd;
-	// Base address when mapped into process space
-	uintptr_t map_base;
+    // UIO device fd (when opened)
+    int uio_fd;
+    // Base address when mapped into process space
+    uintptr_t map_base;
 };
 
 //---------------------------------------------------------------------------------------------

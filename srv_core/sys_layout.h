@@ -23,25 +23,25 @@
 //---------------------------------------------------------------------------------------------
 
 struct sys_layout {
-	struct partition *partitions[MAX_PARTITIONS];
-	int partitions_count;
+    struct partition *partitions[MAX_PARTITIONS];
+    int partitions_count;
 
-	struct hw_task *hw_tasks[MAX_HW_TASKS];
-	int hw_tasks_count;
+    struct hw_task *hw_tasks[MAX_HW_TASKS];
+    int hw_tasks_count;
 
-	buffctl_ft *buffctl;
+    buffctl_ft *buffctl;
 };
 
 //---------------------------------------------------------------------------------------------
 
 int sys_layout_init(struct sys_layout **self, const struct sys_hw_config *hw_config,
-					const char *arch_file, const char *hw_tasks_file,
-					struct scheduler *scheduler, buffctl_ft *buffctl);
+                    const char *arch_file, const char *hw_tasks_file,
+                    struct scheduler *scheduler, buffctl_ft *buffctl);
 
 void sys_layout_free(struct sys_layout *self);
 
 struct hw_task *sys_layout_get_hw_task(const struct sys_layout *self,
-										uint32_t hw_task_id);
+                                        uint32_t hw_task_id);
 
 int sys_layout_get_hw_tasks(const struct sys_layout *self, struct hw_task **hw_tasks);
 

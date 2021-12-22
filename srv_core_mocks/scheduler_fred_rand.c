@@ -30,184 +30,184 @@ int push_req_fri_queue_(struct scheduler_fred_rand *self, struct accel_req *requ
 
 static inline
 int pull_req_partition_queue_(struct scheduler_fred_rand *self,
-								struct accel_req *request_done);
+                                struct accel_req *request_done);
 
 //---------------------------------------------------------------------------------------------
 
 static inline
 int start_slot_after_rcfg_(struct scheduler_fred_rand *self, struct accel_req *request_done)
 {
-	int retval;
-	struct hw_task *hw_task;
-	struct slot *slot;
-	struct slot_timer *timer;
-	struct accel_req *next_request;
+    int retval;
+    struct hw_task *hw_task;
+    struct slot *slot;
+    struct slot_timer *timer;
+    struct accel_req *next_request;
 
-	hw_task = accel_req_get_hw_task(request_done);
-	slot = accel_req_get_slot(request_done);
-	timer = accel_req_get_timer(request_done);
+    hw_task = accel_req_get_hw_task(request_done);
+    slot = accel_req_get_slot(request_done);
+    timer = accel_req_get_timer(request_done);
 
-	assert(hw_task);
-	assert(slot);
-	assert(timer);
+    assert(hw_task);
+    assert(slot);
+    assert(timer);
 
-	// Start the hardware accelerator
-	retval = slot_start_compute(slot, request_done);
-	if (retval)
-		return -1;
+    // Start the hardware accelerator
+    retval = slot_start_compute(slot, request_done);
+    if (retval)
+        return -1;
 
-	// And arm the watchdog timer
-	retval = slot_timer_arm(timer, hw_task_get_timeout_us(hw_task), request_done);
-	if (retval)
-		return -1;
+    // And arm the watchdog timer
+    retval = slot_timer_arm(timer, hw_task_get_timeout_us(hw_task), request_done);
+    if (retval)
+        return -1;
 
-	logger_log(LOG_LEV_FULL,"\tfred_sys: slot: %d of partition: %s"
-							" started for hw-task: %s",
-							slot_get_index(slot),
-							partition_get_name(hw_task_get_partition(
-								accel_req_get_hw_task(request_done))),
-							hw_task_get_name(accel_req_get_hw_task(request_done)));
+    logger_log(LOG_LEV_FULL,"\tfred_sys: slot: %d of partition: %s"
+                            " started for hw-task: %s",
+                            slot_get_index(slot),
+                            partition_get_name(hw_task_get_partition(
+                                accel_req_get_hw_task(request_done))),
+                            hw_task_get_name(accel_req_get_hw_task(request_done)));
 
-	// If the FRI queue is not empty start next reconfiguration
-	if (!TAILQ_EMPTY(&self->fri_queue_head)) {
+    // If the FRI queue is not empty start next reconfiguration
+    if (!TAILQ_EMPTY(&self->fri_queue_head)) {
 
-		// Get the head request from the FRI queue
-		next_request = TAILQ_FIRST(&self->fri_queue_head);
+        // Get the head request from the FRI queue
+        next_request = TAILQ_FIRST(&self->fri_queue_head);
 
-		// Remove the head request from the FRI queue
-		TAILQ_REMOVE(&self->fri_queue_head, next_request, queue_elem);
+        // Remove the head request from the FRI queue
+        TAILQ_REMOVE(&self->fri_queue_head, next_request, queue_elem);
 
-		logger_log(LOG_LEV_PEDANTIC,"\tfred_sys: FRI queue not empty");
+        logger_log(LOG_LEV_PEDANTIC,"\tfred_sys: FRI queue not empty");
 
-		// Start reconfiguration
-		retval = start_rcfg_(self, next_request);
-	}
+        // Start reconfiguration
+        retval = start_rcfg_(self, next_request);
+    }
 
-	return retval;
+    return retval;
 }
 
 
 static inline
 int start_rcfg_(struct scheduler_fred_rand *self, struct accel_req *request)
 {
-	int retval;
+    int retval;
 
-	// If the slot already contains the hw-task
-	if (accel_req_get_skip_rcfg(request)) {
-		logger_log(LOG_LEV_FULL,"\tfred_sys: skipping rcfg of slot: %d"
-								" of partition: %s for hw-task: %s",
-								slot_get_index(accel_req_get_slot(request)),
-								partition_get_name(hw_task_get_partition(
-										accel_req_get_hw_task(request))),
-								hw_task_get_name(accel_req_get_hw_task(request)));
+    // If the slot already contains the hw-task
+    if (accel_req_get_skip_rcfg(request)) {
+        logger_log(LOG_LEV_FULL,"\tfred_sys: skipping rcfg of slot: %d"
+                                " of partition: %s for hw-task: %s",
+                                slot_get_index(accel_req_get_slot(request)),
+                                partition_get_name(hw_task_get_partition(
+                                        accel_req_get_hw_task(request))),
+                                hw_task_get_name(accel_req_get_hw_task(request)));
 
-		// Start the slot immediately
-		retval = start_slot_after_rcfg_(self, request);
+        // Start the slot immediately
+        retval = start_slot_after_rcfg_(self, request);
 
-	} else {
-		logger_log(LOG_LEV_FULL,"\tfred_sys: start rcfg of slot: %d"
-								" of partition: %s for hw-task: %s",
-								slot_get_index(accel_req_get_slot(request)),
-								partition_get_name(hw_task_get_partition(
-										accel_req_get_hw_task(request))),
-								hw_task_get_name(accel_req_get_hw_task(request)));
+    } else {
+        logger_log(LOG_LEV_FULL,"\tfred_sys: start rcfg of slot: %d"
+                                " of partition: %s for hw-task: %s",
+                                slot_get_index(accel_req_get_slot(request)),
+                                partition_get_name(hw_task_get_partition(
+                                        accel_req_get_hw_task(request))),
+                                hw_task_get_name(accel_req_get_hw_task(request)));
 
-		// Start FPGA reconfiguration and bind hw-task to the slot
-		slot_prepare_for_rcfg(accel_req_get_slot(request));
-		retval = devcfg_start_prog(self->devcfg, request);
-	}
+        // Start FPGA reconfiguration and bind hw-task to the slot
+        slot_prepare_for_rcfg(accel_req_get_slot(request));
+        retval = devcfg_start_prog(self->devcfg, request);
+    }
 
-	return retval;
+    return retval;
 }
 
 static inline
 void ins_req_ordered_(struct accel_req_queue *queue_head, struct accel_req *new_request)
 {
-	struct accel_req *req = NULL;
+    struct accel_req *req = NULL;
 
-	// If queue is empty
-	if (TAILQ_EMPTY(queue_head)) {
-		TAILQ_INSERT_HEAD(queue_head, new_request, queue_elem);
-		return;
-	}
+    // If queue is empty
+    if (TAILQ_EMPTY(queue_head)) {
+        TAILQ_INSERT_HEAD(queue_head, new_request, queue_elem);
+        return;
+    }
 
-	// Fri queue contains at least one element
-	TAILQ_FOREACH(req, queue_head, queue_elem) {
-		if (accel_req_compare_timestamps(req, new_request) == 1)
-			break;
-	}
+    // Fri queue contains at least one element
+    TAILQ_FOREACH(req, queue_head, queue_elem) {
+        if (accel_req_compare_timestamps(req, new_request) == 1)
+            break;
+    }
 
-	// Last
-	if (req == NULL)
-		TAILQ_INSERT_TAIL(queue_head, new_request, queue_elem);
-	else
-		TAILQ_INSERT_BEFORE(req, new_request, queue_elem);
+    // Last
+    if (req == NULL)
+        TAILQ_INSERT_TAIL(queue_head, new_request, queue_elem);
+    else
+        TAILQ_INSERT_BEFORE(req, new_request, queue_elem);
 }
 
 //TODO: integrate the function above to avoid insert and remove
 static inline
 int push_req_fri_queue_(struct scheduler_fred_rand *self, struct accel_req *request)
 {
-	int retval = 0;
+    int retval = 0;
 
-	// Insert the request directly into FRI queue
-	ins_req_ordered_(&self->fri_queue_head, request);
+    // Insert the request directly into FRI queue
+    ins_req_ordered_(&self->fri_queue_head, request);
 
-	// If the inserted request is on top of FRI queue
-	// and the DEVCFG is IDLE (not programming)
-	if (devcfg_is_idle(self->devcfg) &&
-		TAILQ_FIRST(&self->fri_queue_head) == request) {
+    // If the inserted request is on top of FRI queue
+    // and the DEVCFG is IDLE (not programming)
+    if (devcfg_is_idle(self->devcfg) &&
+        TAILQ_FIRST(&self->fri_queue_head) == request) {
 
-		logger_log(LOG_LEV_PEDANTIC,"\tfred_sys: DevCfg idle & request on top");
+        logger_log(LOG_LEV_PEDANTIC,"\tfred_sys: DevCfg idle & request on top");
 
-		// Remove the head request from the FRI queue
-		TAILQ_REMOVE(&self->fri_queue_head, request, queue_elem);
+        // Remove the head request from the FRI queue
+        TAILQ_REMOVE(&self->fri_queue_head, request, queue_elem);
 
-		// Start reconfiguration
-		retval = start_rcfg_(self, request);
-	}
+        // Start reconfiguration
+        retval = start_rcfg_(self, request);
+    }
 
-	return retval;
+    return retval;
 }
 
 static inline
 int pull_req_partition_queue_(struct scheduler_fred_rand *self, struct accel_req *request_done)
 {
-	int retval = 0;
+    int retval = 0;
 
-	struct accel_req *request;
-	struct accel_req_queue *part_queue_head;
+    struct accel_req *request;
+    struct accel_req_queue *part_queue_head;
 
-	struct slot *slot;
-	struct slot_timer *timer;
-	struct partition *partition;
+    struct slot *slot;
+    struct slot_timer *timer;
+    struct partition *partition;
 
-	// Get the slot freed from the request that has been completed
-	slot = accel_req_get_slot(request_done);
-	timer = accel_req_get_timer(request_done);
-	partition = hw_task_get_partition(accel_req_get_hw_task(request_done));
+    // Get the slot freed from the request that has been completed
+    slot = accel_req_get_slot(request_done);
+    timer = accel_req_get_timer(request_done);
+    partition = hw_task_get_partition(accel_req_get_hw_task(request_done));
 
-	// Check if there are pending requests in the partition queue (queue not empty)
-	part_queue_head = &self->part_queues_heads[partition_get_index(partition)];
-	if (!TAILQ_EMPTY(part_queue_head)) {
+    // Check if there are pending requests in the partition queue (queue not empty)
+    part_queue_head = &self->part_queues_heads[partition_get_index(partition)];
+    if (!TAILQ_EMPTY(part_queue_head)) {
 
-		// Get the head request from the partition FIFO queue
-		request = TAILQ_FIRST(part_queue_head);
+        // Get the head request from the partition FIFO queue
+        request = TAILQ_FIRST(part_queue_head);
 
-		// Remove the request from the partition FIFO queue
-		TAILQ_REMOVE(part_queue_head, request, queue_elem);
+        // Remove the request from the partition FIFO queue
+        TAILQ_REMOVE(part_queue_head, request, queue_elem);
 
-		// Reserve the slot for the HW-task
-		slot_set_reserved(slot);
-		accel_req_set_slot(request, slot);
-		accel_req_set_timer(request, timer);
+        // Reserve the slot for the HW-task
+        slot_set_reserved(slot);
+        accel_req_set_slot(request, slot);
+        accel_req_set_timer(request, timer);
 
-		// Push request into FRI queue. If request goes on top of FRI queue
-		// and devcfg is idle start reconfiguration immediately
-		retval = push_req_fri_queue_(self, request);
-	}
+        // Push request into FRI queue. If request goes on top of FRI queue
+        // and devcfg is idle start reconfiguration immediately
+        retval = push_req_fri_queue_(self, request);
+    }
 
-	return retval;
+    return retval;
 }
 
 // ------------------------ Functions to implement scheduler interface ------------------------
@@ -216,248 +216,248 @@ int pull_req_partition_queue_(struct scheduler_fred_rand *self, struct accel_req
 static
 int sched_fred_rand_push_accel_req_(struct scheduler *self, struct accel_req *request)
 {
-	int retval;
-	struct scheduler_fred_rand *sched;
-	struct hw_task *hw_task;
-	struct slot *slot;
-	struct slot_timer *timer;
-	struct partition *partition;
+    int retval;
+    struct scheduler_fred_rand *sched;
+    struct hw_task *hw_task;
+    struct slot *slot;
+    struct slot_timer *timer;
+    struct partition *partition;
 
-	assert(self);
-	assert(request);
+    assert(self);
+    assert(request);
 
-	sched = (struct scheduler_fred_rand *)self;
+    sched = (struct scheduler_fred_rand *)self;
 
-	// Set request's time stamp
-	accel_req_stamp_timestamp(request);
+    // Set request's time stamp
+    accel_req_stamp_timestamp(request);
 
-	// Search a free slot in the partition
-	hw_task = accel_req_get_hw_task(request);
-	partition = hw_task_get_partition(hw_task);
-	partition_search_random_slot(partition, &slot, &timer, hw_task);
+    // Search a free slot in the partition
+    hw_task = accel_req_get_hw_task(request);
+    partition = hw_task_get_partition(hw_task);
+    partition_search_random_slot(partition, &slot, &timer, hw_task);
 
-	// If all slots in the partition are occupied
-	if (!slot) {
-		logger_log(LOG_LEV_FULL,"\tfred_sys: all slots are busy for hw-task %s"
-								", insert into partition %s queue",
-								hw_task_get_name(hw_task),
-								partition_get_name(partition));
+    // If all slots in the partition are occupied
+    if (!slot) {
+        logger_log(LOG_LEV_FULL,"\tfred_sys: all slots are busy for hw-task %s"
+                                ", insert into partition %s queue",
+                                hw_task_get_name(hw_task),
+                                partition_get_name(partition));
 
-		// Insert the new request into the partition FIFO queue
-		TAILQ_INSERT_TAIL(&sched->part_queues_heads[partition_get_index(partition)],
-							request, queue_elem);
+        // Insert the new request into the partition FIFO queue
+        TAILQ_INSERT_TAIL(&sched->part_queues_heads[partition_get_index(partition)],
+                            request, queue_elem);
 
-		retval = 0;
+        retval = 0;
 
-	// At least one free slot in the partition, never skip reconfiguration
-	} else {
-		// Reserve the slot for the HW-task
-		slot_set_reserved(slot);
-		accel_req_set_slot(request, slot);
-		accel_req_set_timer(request, timer);
+    // At least one free slot in the partition, never skip reconfiguration
+    } else {
+        // Reserve the slot for the HW-task
+        slot_set_reserved(slot);
+        accel_req_set_slot(request, slot);
+        accel_req_set_timer(request, timer);
 
-		logger_log(LOG_LEV_FULL,"\tfred_sys: hw-task: %s got slot: %d of"
-								" its partition: %s, inserted in fri queue",
-								hw_task_get_name(hw_task),
-								slot_get_index(slot),
-								partition_get_name(partition));
+        logger_log(LOG_LEV_FULL,"\tfred_sys: hw-task: %s got slot: %d of"
+                                " its partition: %s, inserted in fri queue",
+                                hw_task_get_name(hw_task),
+                                slot_get_index(slot),
+                                partition_get_name(partition));
 
-		// Push request into FRI queue. If request goes on top of FRI queue
-		// and devcfg is idle start reconfiguration immediately
-		retval = push_req_fri_queue_(sched, request);
-	}
+        // Push request into FRI queue. If request goes on top of FRI queue
+        // and devcfg is idle start reconfiguration immediately
+        retval = push_req_fri_queue_(sched, request);
+    }
 
-	return retval;
+    return retval;
 }
 
 // Reconfiguration done
 static
 int sched_fred_rand_rcfg_complete_(struct scheduler *self, struct accel_req *request_done)
 {
-	struct scheduler_fred_rand *sched;
-	struct slot *slot;
-	int rcfg_time_us;
+    struct scheduler_fred_rand *sched;
+    struct slot *slot;
+    int rcfg_time_us;
 
-	assert(self);
-	assert(request_done);
+    assert(self);
+    assert(request_done);
 
-	sched = (struct scheduler_fred_rand *)self;
+    sched = (struct scheduler_fred_rand *)self;
 
-	// Get the slot that has been reconfigured
-	slot = accel_req_get_slot(request_done);
-	assert(slot);
+    // Get the slot that has been reconfigured
+    slot = accel_req_get_slot(request_done);
+    assert(slot);
 
-	// Clear devcfg event
-	rcfg_time_us = (int)devcfg_clear_evt(sched->devcfg);
-	if (rcfg_time_us <= 0)
-		return -1;
+    // Clear devcfg event
+    rcfg_time_us = (int)devcfg_clear_evt(sched->devcfg);
+    if (rcfg_time_us <= 0)
+        return -1;
 
-	logger_log(LOG_LEV_FULL,"\tfred_sys: devcfg, slot: %d of partition: %s"
-							" rcfg completed for hw-task: %s in %d us",
-							slot_get_index(slot),
-							partition_get_name(hw_task_get_partition(
-								accel_req_get_hw_task(request_done))),
-							hw_task_get_name(accel_req_get_hw_task(request_done)),
-							rcfg_time_us);
+    logger_log(LOG_LEV_FULL,"\tfred_sys: devcfg, slot: %d of partition: %s"
+                            " rcfg completed for hw-task: %s in %d us",
+                            slot_get_index(slot),
+                            partition_get_name(hw_task_get_partition(
+                                accel_req_get_hw_task(request_done))),
+                            hw_task_get_name(accel_req_get_hw_task(request_done)),
+                            rcfg_time_us);
 
-	// Re-enable slot after it has been reconfigured
-	slot_reinit_after_rcfg(slot);
+    // Re-enable slot after it has been reconfigured
+    slot_reinit_after_rcfg(slot);
 
 #ifdef RCFG_CHECK
-	// Only for testing
-	// Check if the right hw-task has been reconfigured
-	if (!slot_check_hw_task_consistency(slot)) {
-		ERROR_PRINT("\tfred_sys: critical error: mismatch on slot %d"
-					" of partition %s for hw-task %s",
-					slot_get_index(slot),
-					partition_get_name(hw_task_get_partition(
-						accel_req_get_hw_task(request_done))),
-					hw_task_get_name(accel_req_get_hw_task(request_done)));
+    // Only for testing
+    // Check if the right hw-task has been reconfigured
+    if (!slot_check_hw_task_consistency(slot)) {
+        ERROR_PRINT("\tfred_sys: critical error: mismatch on slot %d"
+                    " of partition %s for hw-task %s",
+                    slot_get_index(slot),
+                    partition_get_name(hw_task_get_partition(
+                        accel_req_get_hw_task(request_done))),
+                    hw_task_get_name(accel_req_get_hw_task(request_done)));
 
-		return -1;
-	}
+        return -1;
+    }
 #endif
 
-	// Start the hardware accelerator
-	return start_slot_after_rcfg_(sched, request_done);
+    // Start the hardware accelerator
+    return start_slot_after_rcfg_(sched, request_done);
 }
 
 // Hardware task execution completed
 static
 int sched_fred_rand_slot_complete_(struct scheduler *self, struct accel_req *request_done)
 {
-	int retval;
-	uint64_t exec_time_us;
-	struct scheduler_fred_rand *sched;
-	struct slot *slot;
-	struct slot_timer *timer;
-	struct partition *partition;
+    int retval;
+    uint64_t exec_time_us;
+    struct scheduler_fred_rand *sched;
+    struct slot *slot;
+    struct slot_timer *timer;
+    struct partition *partition;
 
-	assert(self);
-	assert(request_done);
+    assert(self);
+    assert(request_done);
 
-	sched = (struct scheduler_fred_rand *)self;
+    sched = (struct scheduler_fred_rand *)self;
 
-	slot = accel_req_get_slot(request_done);
-	timer = accel_req_get_timer(request_done);
-	partition = hw_task_get_partition(accel_req_get_hw_task(request_done));
+    slot = accel_req_get_slot(request_done);
+    timer = accel_req_get_timer(request_done);
+    partition = hw_task_get_partition(accel_req_get_hw_task(request_done));
 
-	assert(slot);
-	assert(timer);
-	assert(partition);
+    assert(slot);
+    assert(timer);
+    assert(partition);
 
-	// Get execution time (upper bound) and disarm the timer
-	retval = slot_timer_disarm(timer, &exec_time_us);
-	if (retval)
-		return -1;
+    // Get execution time (upper bound) and disarm the timer
+    retval = slot_timer_disarm(timer, &exec_time_us);
+    if (retval)
+        return -1;
 
-	// Clear slot device
-	slot_clear_after_compute(slot);
+    // Clear slot device
+    slot_clear_after_compute(slot);
 
-	logger_log(LOG_LEV_FULL,"\tfred_sys: slot: %d of partition: %s"
-							" completed execution of hw-task: %s in %"PRIu64" us",
-							slot_get_index(slot), partition_get_name(partition),
-							hw_task_get_name(accel_req_get_hw_task(request_done)),
-							exec_time_us);
+    logger_log(LOG_LEV_FULL,"\tfred_sys: slot: %d of partition: %s"
+                            " completed execution of hw-task: %s in %"PRIu64" us",
+                            slot_get_index(slot), partition_get_name(partition),
+                            hw_task_get_name(accel_req_get_hw_task(request_done)),
+                            exec_time_us);
 
-	// Notify the client through the notify action callback
-	retval = accel_req_notify_action(request_done, NOTIFY_ACTION_DONE);
-	if (retval)
-		return -1;
+    // Notify the client through the notify action callback
+    retval = accel_req_notify_action(request_done, NOTIFY_ACTION_DONE);
+    if (retval)
+        return -1;
 
-	// Pull requests from the partition queue
-	retval = pull_req_partition_queue_(sched, request_done);
+    // Pull requests from the partition queue
+    retval = pull_req_partition_queue_(sched, request_done);
 
-	return retval;
+    return retval;
 }
 
 // Hardware task timeout
 static
 int sched_fred_rand_slot_timeout_(struct scheduler *self, struct accel_req *request_done)
 {
-	int retval;
-	struct scheduler_fred_rand *sched;
-	struct slot *slot;
-	struct partition *partition;
+    int retval;
+    struct scheduler_fred_rand *sched;
+    struct slot *slot;
+    struct partition *partition;
 
-	assert(self);
-	assert(request_done);
+    assert(self);
+    assert(request_done);
 
-	sched = (struct scheduler_fred_rand *)self;
+    sched = (struct scheduler_fred_rand *)self;
 
-	slot = accel_req_get_slot(request_done);
-	partition = hw_task_get_partition(accel_req_get_hw_task(request_done));
+    slot = accel_req_get_slot(request_done);
+    partition = hw_task_get_partition(accel_req_get_hw_task(request_done));
 
-	assert(slot);
-	assert(partition);
+    assert(slot);
+    assert(partition);
 
-	// Ban the offending hw-task (the timer has already expired, no need to disarm)
-	hw_task_set_banned(accel_req_get_hw_task(request_done));
+    // Ban the offending hw-task (the timer has already expired, no need to disarm)
+    hw_task_set_banned(accel_req_get_hw_task(request_done));
 
-	// Disable the slot until the next reconfiguration
-	slot_disable_after_timeout(slot);
+    // Disable the slot until the next reconfiguration
+    slot_disable_after_timeout(slot);
 
-	logger_log(LOG_LEV_FULL,"\tfred_sys: Warning! slot: %d of partition: %s"
-							" overrun! Permanently disabling offending hw-task: %s",
-							slot_get_index(slot), partition_get_name(partition),
-							hw_task_get_name(accel_req_get_hw_task(request_done)));
+    logger_log(LOG_LEV_FULL,"\tfred_sys: Warning! slot: %d of partition: %s"
+                            " overrun! Permanently disabling offending hw-task: %s",
+                            slot_get_index(slot), partition_get_name(partition),
+                            hw_task_get_name(accel_req_get_hw_task(request_done)));
 
-	// Notify the client through the notify action callback
-	retval = accel_req_notify_action(request_done, NOTIFY_ACTION_OVERRUN);
-	if (retval)
-		return -1;
+    // Notify the client through the notify action callback
+    retval = accel_req_notify_action(request_done, NOTIFY_ACTION_OVERRUN);
+    if (retval)
+        return -1;
 
-	// Pull requests from the partition queue
-	retval = pull_req_partition_queue_(sched, request_done);
+    // Pull requests from the partition queue
+    retval = pull_req_partition_queue_(sched, request_done);
 
-	return retval;
+    return retval;
 }
 
 static
 void sched_fred_rand_free_(struct scheduler *self)
 {
-	struct scheduler_fred_rand *sched;
+    struct scheduler_fred_rand *sched;
 
-	sched = (struct scheduler_fred_rand *)self;
+    sched = (struct scheduler_fred_rand *)self;
 
-	if(sched)
-		free(sched);
+    if(sched)
+        free(sched);
 }
 
 //---------------------------------------------------------------------------------------------
 
 int sched_fred_rand_init(struct scheduler **self, struct devcfg *devcfg)
 {
-	struct scheduler_fred_rand *sched;
+    struct scheduler_fred_rand *sched;
 
-	assert(devcfg);
+    assert(devcfg);
 
-	*self = NULL;
+    *self = NULL;
 
-	// Allocate and set everything to 0
-	sched = calloc(1, sizeof(*sched));
-	if (!sched)
-		return -1;
+    // Allocate and set everything to 0
+    sched = calloc(1, sizeof(*sched));
+    if (!sched)
+        return -1;
 
-	// Set properties and methods
-	sched->devcfg = devcfg;
+    // Set properties and methods
+    sched->devcfg = devcfg;
 
-	// Scheduler interface
-	sched->scheduler.push_accel_req = sched_fred_rand_push_accel_req_;
-	sched->scheduler.rcfg_complete = sched_fred_rand_rcfg_complete_;
-	sched->scheduler.slot_complete = sched_fred_rand_slot_complete_;
-	sched->scheduler.slot_timeout = sched_fred_rand_slot_timeout_;
-	sched->scheduler.free = sched_fred_rand_free_;
+    // Scheduler interface
+    sched->scheduler.push_accel_req = sched_fred_rand_push_accel_req_;
+    sched->scheduler.rcfg_complete = sched_fred_rand_rcfg_complete_;
+    sched->scheduler.slot_complete = sched_fred_rand_slot_complete_;
+    sched->scheduler.slot_timeout = sched_fred_rand_slot_timeout_;
+    sched->scheduler.free = sched_fred_rand_free_;
 
-	// Initialize partition queues heads
-	for (int i = 0; i < MAX_PARTITIONS; ++i)
-		TAILQ_INIT(&(sched->part_queues_heads[i]));
+    // Initialize partition queues heads
+    for (int i = 0; i < MAX_PARTITIONS; ++i)
+        TAILQ_INIT(&(sched->part_queues_heads[i]));
 
-	// And fri queue head
-	TAILQ_INIT(&sched->fri_queue_head);
+    // And fri queue head
+    TAILQ_INIT(&sched->fri_queue_head);
 
-	*self = &sched->scheduler;
+    *self = &sched->scheduler;
 
-	return 0;
+    return 0;
 }
 

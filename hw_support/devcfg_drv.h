@@ -20,15 +20,14 @@
 //---------------------------------------------------------------------------------------------
 
 struct devcfg_drv {
+    int (*get_fd)(struct devcfg_drv *self);
 
-	int (*get_fd)(struct devcfg_drv *self);
+    int (*start_rcfg)(struct devcfg_drv *self, const struct phy_bit *phy_bit);
 
-	int (*start_rcfg)(struct devcfg_drv *self, const struct phy_bit *phy_bit);
+    // Should return reconfiguration time
+    uint64_t (*after_rcfg)(struct devcfg_drv *self);
 
-	// Should return reconfiguration time
-	uint64_t (*after_rcfg)(struct devcfg_drv *self);
-
-	void (*free)(struct devcfg_drv *self);
+    void (*free)(struct devcfg_drv *self);
 };
 
 //---------------------------------------------------------------------------------------------
@@ -36,33 +35,33 @@ struct devcfg_drv {
 static inline
 int devcfg_drv_get_fd(struct devcfg_drv *self)
 {
-	assert(self);
+    assert(self);
 
-	return self->get_fd(self);
+    return self->get_fd(self);
 }
 
 static inline
 int devcfg_drv_start_rcfg(struct devcfg_drv *self, const struct phy_bit *phy_bit)
 {
-	assert(self);
+    assert(self);
 
-	return self->start_rcfg(self, phy_bit);
+    return self->start_rcfg(self, phy_bit);
 }
 
 static inline
 uint64_t devcfg_drv_after_rcfg(struct devcfg_drv *self)
 {
-	assert(self);
+    assert(self);
 
-	return self->after_rcfg(self);
+    return self->after_rcfg(self);
 }
 
 static inline
 void devcfg_drv_free(struct devcfg_drv *self)
 {
-	assert(self);
+    assert(self);
 
-	self->free(self);
+    self->free(self);
 }
 
 //---------------------------------------------------------------------------------------------

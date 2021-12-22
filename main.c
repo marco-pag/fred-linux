@@ -22,40 +22,39 @@
 
 int main(int argc, char **argv)
 {
-	int retval;
-	int opts;
-	struct fred_sys *fred_sys;
-	enum fred_sys_mode mode;
+    int retval;
+    int opts;
+    struct fred_sys *fred_sys;
+    enum fred_sys_mode mode;
 
-	opterr = 0;
-	opts = getopt(argc, argv, "hre");
+    opterr = 0;
+    opts = getopt(argc, argv, "hre");
 
-	switch (opts) {
-		case 'h':
-			printf("Use -r for reconfiguration test, -e for execution test\n");
-			return 0;
-			break;
-		case 'r':
-			mode = FRED_SYS_RCFG_TEST_MODE;
-			break;
-		case 'e':
-			mode = FRED_SYS_HW_TASKS_TEST_MODE;
-			break;
-		default:
-			mode = FRED_SYS_NORMAL_MODE;
-			break;
-	}
+    switch (opts) {
+        case 'h':
+            printf("Use -r for reconfiguration test, -e for execution test\n");
+            return 0;
+            break;
+        case 'r':
+            mode = FRED_SYS_RCFG_TEST_MODE;
+            break;
+        case 'e':
+            mode = FRED_SYS_HW_TASKS_TEST_MODE;
+            break;
+        default:
+            mode = FRED_SYS_NORMAL_MODE;
+            break;
+    }
 
+    retval = fred_sys_init(&fred_sys, ARCH_FILE, HW_TASKS_FILE, mode);
+    if (retval < 0)
+        return -1;
 
-	retval = fred_sys_init(&fred_sys, ARCH_FILE, HW_TASKS_FILE, mode);
-	if (retval < 0)
-		return -1;
+    // Event loop
+    fred_sys_run(fred_sys);
 
-	// Event loop
-	fred_sys_run(fred_sys);
+    fred_sys_free(fred_sys);
 
-	fred_sys_free(fred_sys);
-
-	return 0;
+    return 0;
 }
 

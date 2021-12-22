@@ -25,18 +25,18 @@
 //---------------------------------------------------------------------------------------------
 
 struct devcfg {
-	// ------------------------//
-	struct event_handler handler;	 	// Handler interface
-	// ------------------------//
+    // ------------------------//
+    struct event_handler handler;       // Handler interface
+    // ------------------------//
 
-	struct devcfg_drv *drv;				// Handle
+    struct devcfg_drv *drv;             // Handle
 
-	enum {DEVCFG_INIT, DEVCFG_IDLE, DEVCFG_PROG} state;
+    enum {DEVCFG_INIT, DEVCFG_IDLE, DEVCFG_PROG} state;
 
-	// Pointer to the (single) request under reconfiguration
-	struct accel_req *current_rcfg_req;
+    // Pointer to the (single) request under reconfiguration
+    struct accel_req *current_rcfg_req;
 
-	struct scheduler *scheduler;
+    struct scheduler *scheduler;
 };
 
 //---------------------------------------------------------------------------------------------
@@ -44,9 +44,9 @@ struct devcfg {
 static inline
 struct event_handler *devcfg_get_event_handler(struct devcfg *self)
 {
-	assert(self);
+    assert(self);
 
-	return &self->handler;
+    return &self->handler;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -54,17 +54,17 @@ struct event_handler *devcfg_get_event_handler(struct devcfg *self)
 static inline
 int devcfg_is_idle(const struct devcfg *self)
 {
-	assert(self);
+    assert(self);
 
-	return self->state == DEVCFG_IDLE;
+    return self->state == DEVCFG_IDLE;
 }
 
 static inline
 int devcfg_is_prog(const struct devcfg *self)
 {
-	assert(self);
+    assert(self);
 
-	return self->state == DEVCFG_PROG;
+    return self->state == DEVCFG_PROG;
 }
 
 //---------------------------------------------------------------------------------------------

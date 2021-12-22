@@ -17,33 +17,33 @@
 #include <assert.h>
 
 struct phy_bit {
-	uintptr_t addr;
-	size_t size;
+    uintptr_t addr;
+    size_t size;
 };
 
 static inline
 void phy_bit_set(struct phy_bit *self, uintptr_t addr, size_t size)
 {
-	assert(self);
+    assert(self);
 
-	self->addr = addr;
-	self->size = size;
+    self->addr = addr;
+    self->size = size;
 }
 
 static inline
 uintptr_t phy_bit_get_addr(const struct phy_bit *self)
 {
-	assert(self);
+    assert(self);
 
-	return self->addr;
+    return self->addr;
 }
 
 static inline
 size_t phy_bit_get_size(const struct phy_bit *self)
 {
-	assert(self);
+    assert(self);
 
-	return self->size;
+    return self->size;
 }
 
 #endif /* PHY_BIT_H_ */

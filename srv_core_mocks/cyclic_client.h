@@ -22,34 +22,34 @@
 //---------------------------------------------------------------------------------------------
 
 struct cyclic_sw_tasks_client {
-	// ------------------------//
-	struct event_handler handler; 				// Handler (inherits)
-	// ------------------------//
+    // ------------------------//
+    struct event_handler handler;               // Handler (inherits)
+    // ------------------------//
 
-	int out_fd;									// Handle (source)
-	int in_fd;
+    int out_fd;                                 // Handle (source)
+    int in_fd;
 
-	struct hw_task *hw_tasks[MAX_HW_TASKS];		// Associated hw-tasks
-	int hw_tasks_count;
+    struct hw_task *hw_tasks[MAX_HW_TASKS];     // Associated hw-tasks
+    int hw_tasks_count;
 
-	int next_hw_task;
+    int next_hw_task;
 
-	// And data buffers (one set for each hw-task)
-	struct fred_buff_if *data_buffs_ifs[MAX_HW_TASKS][MAX_DATA_BUFFS];
+    // And data buffers (one set for each hw-task)
+    struct fred_buff_if *data_buffs_ifs[MAX_HW_TASKS][MAX_DATA_BUFFS];
 
-	struct scheduler *scheduler;				// Scheduler state machine
-	struct sys_layout *sys;						// System layout
+    struct scheduler *scheduler;                // Scheduler state machine
+    struct sys_layout *sys;                     // System layout
 
-	buffctl_ft *buffctl;						// To allocate buffers (not owning)
+    buffctl_ft *buffctl;                        // To allocate buffers (not owning)
 
-	struct accel_req accel_req;					// Max *one* request at time no
-												// need to allocate dynamically
+    struct accel_req accel_req;                 // Max *one* request at time no
+                                                // need to allocate dynamically
 };
 
 //---------------------------------------------------------------------------------------------
 
 int cyclic_sw_tasks_client_init(struct event_handler **self, struct sys_layout *sys,
-								struct scheduler *scheduler, buffctl_ft *buffctl);
+                                struct scheduler *scheduler, buffctl_ft *buffctl);
 
 //---------------------------------------------------------------------------------------------
 

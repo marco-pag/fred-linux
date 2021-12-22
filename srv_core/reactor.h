@@ -22,13 +22,13 @@ struct reactor;
 //--- Reactor interface -----------------------------------------------------------------------
 
 enum react_handler_mode {
-	REACT_NORMAL_HANDLER,
-	REACT_PRI_HANDLER
+    REACT_NORMAL_HANDLER,
+    REACT_PRI_HANDLER
 };
 
 enum react_handler_ownership {
-	REACT_NOT_OWNED,
-	REACT_OWNED
+    REACT_NOT_OWNED,
+    REACT_OWNED
 };
 
 int reactor_init(struct reactor **self);
@@ -36,8 +36,8 @@ int reactor_init(struct reactor **self);
 void reactor_free(struct reactor *self);
 
 int reactor_add_event_handler(struct reactor *self, struct event_handler *event_handler,
-								enum react_handler_mode handler_mode,
-								enum react_handler_ownership handler_ownership);
+                                enum react_handler_mode handler_mode,
+                                enum react_handler_ownership handler_ownership);
 
 void reactor_event_loop(struct reactor *self);
 

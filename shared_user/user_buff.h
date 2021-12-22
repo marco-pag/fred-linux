@@ -19,10 +19,10 @@
 //---------------------------------------------------------------------------------------------
 
 struct user_buff {
-	void *map_addr;
-	int file_d;
-	size_t length;
-	char dev_name[MAX_PATH];
+    void *map_addr;
+    int file_d;
+    size_t length;
+    char dev_name[MAX_PATH];
 };
 
 //---------------------------------------------------------------------------------------------

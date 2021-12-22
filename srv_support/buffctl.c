@@ -33,8 +33,8 @@ static const char default_dev[] = "/dev/fred/buffctl";
 //---------------------------------------------------------------------------------------------
 
 struct buffctl_ {
-	int fd;
-	char dev_name[MAX_PATH];
+    int fd;
+    char dev_name[MAX_PATH];
 };
 
 //---------------------------------------------------------------------------------------------
@@ -42,77 +42,77 @@ struct buffctl_ {
 int buffctl_open(buffctl_ft **buffctl, const char *dev_name)
 {
 
-	*buffctl = calloc(1, sizeof(**buffctl));
-	if (*buffctl == NULL) {
-		ERROR_PRINT("buffctl: could not allocate memory\n");
-		return -1;
-	}
+    *buffctl = calloc(1, sizeof(**buffctl));
+    if (*buffctl == NULL) {
+        ERROR_PRINT("buffctl: could not allocate memory\n");
+        return -1;
+    }
 
-	strncpy((*buffctl)->dev_name,
-			dev_name == NULL ? default_dev : dev_name,
-			sizeof((*buffctl)->dev_name) - 1);
+    strncpy((*buffctl)->dev_name,
+            dev_name == NULL ? default_dev : dev_name,
+            sizeof((*buffctl)->dev_name) - 1);
 
-	(*buffctl)->fd = open((*buffctl)->dev_name, O_RDWR);
-	if ((*buffctl)->fd < 0) {
-		ERROR_PRINT("buffctl: failed to open %s \n", (*buffctl)->dev_name);
-		free(*buffctl);
-		return -1;
-	}
+    (*buffctl)->fd = open((*buffctl)->dev_name, O_RDWR);
+    if ((*buffctl)->fd < 0) {
+        ERROR_PRINT("buffctl: failed to open %s \n", (*buffctl)->dev_name);
+        free(*buffctl);
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 int buffctl_close(buffctl_ft *buffctl)
 {
-	assert(buffctl);
+    assert(buffctl);
 
-	close(buffctl->fd);
-	free(buffctl);
-	return 0;
+    close(buffctl->fd);
+    free(buffctl);
+    return 0;
 }
 
 int buffctl_alloc_buff(buffctl_ft *buffctl, struct fred_buff_if **buff_if, size_t size)
 {
-	int retval;
+    int retval;
 
-	assert(buffctl);
+    assert(buffctl);
 
-	*buff_if = calloc(1, sizeof(**buff_if));
-	if (*buff_if == NULL) {
-		ERROR_PRINT("buffctl: could not allocate memory\n");
-		return -1;
-	}
+    *buff_if = calloc(1, sizeof(**buff_if));
+    if (*buff_if == NULL) {
+        ERROR_PRINT("buffctl: could not allocate memory\n");
+        return -1;
+    }
 
-	// Set requested size
-	(*buff_if)->length = size;
+    // Set requested size
+    (*buff_if)->length = size;
 
-	// Request a new buffer to the buffctl kernel module
-	retval = ioctl(buffctl->fd, FRED_BUFFCTL_ALLOC, *buff_if);
-	if (retval < 0) {
-		ERROR_PRINT("buffctl: kernel module could not allocate a new buff\n");
-		return -1;
-	}
+    // Request a new buffer to the buffctl kernel module
+    retval = ioctl(buffctl->fd, FRED_BUFFCTL_ALLOC, *buff_if);
+    if (retval < 0) {
+        ERROR_PRINT("buffctl: kernel module could not allocate a new buff\n");
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 int buffctl_free_buff(buffctl_ft *buffctl, struct fred_buff_if *buff_if)
 {
-	int retval;
+    int retval;
 
-	assert(buffctl);
+    assert(buffctl);
 
-	// Ask the kernel module to free the buffer
-	retval = ioctl(buffctl->fd, FRED_BUFFCTL_FREE, &buff_if->id);
-	if (retval < 0) {
-		ERROR_PRINT("buffctl: kernel module failed to free buffer\n");
-		retval = -1;
-	} else {
-		retval = 0;
-	}
+    // Ask the kernel module to free the buffer
+    retval = ioctl(buffctl->fd, FRED_BUFFCTL_FREE, &buff_if->id);
+    if (retval < 0) {
+        ERROR_PRINT("buffctl: kernel module failed to free buffer\n");
+        retval = -1;
+    } else {
+        retval = 0;
+    }
 
-	// free interface structure
-	free(buff_if);
+    // free interface structure
+    free(buff_if);
 
-	return retval;
+    return retval;
 }

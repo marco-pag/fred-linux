@@ -24,19 +24,19 @@
 //---------------------------------------------------------------------------------------------
 
 struct scheduler_fred_rand {
-	// ------------------------//
-	struct scheduler scheduler;
-	// ------------------------//
+    // ------------------------//
+    struct scheduler scheduler;
+    // ------------------------//
 
-	// Partitions queues heads
-	struct accel_req_queue part_queues_heads[MAX_PARTITIONS];
+    // Partitions queues heads
+    struct accel_req_queue part_queues_heads[MAX_PARTITIONS];
 
-	// Reconfiguration device queue
-	// Partition queue head
-	struct accel_req_queue fri_queue_head;
+    // Reconfiguration device queue
+    // Partition queue head
+    struct accel_req_queue fri_queue_head;
 
-	// Reconfiguration device
-	struct devcfg *devcfg;
+    // Reconfiguration device
+    struct devcfg *devcfg;
 };
 
 

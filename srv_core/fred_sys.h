@@ -19,15 +19,15 @@
 struct fred_sys;
 
 enum fred_sys_mode {
-	FRED_SYS_NORMAL_MODE,			// Regular operation
-	FRED_SYS_RCFG_TEST_MODE,		// Reconfiguration cyclic test
-	FRED_SYS_HW_TASKS_TEST_MODE		// Hw-tasks execution cyclic test
+    FRED_SYS_NORMAL_MODE,           // Regular operation
+    FRED_SYS_RCFG_TEST_MODE,        // Reconfiguration cyclic test
+    FRED_SYS_HW_TASKS_TEST_MODE     // Hw-tasks execution cyclic test
 };
 
 //---------------------------------------------------------------------------------------------
 
 int fred_sys_init(struct fred_sys **self, const char *arch_file,
-				  const char *hw_tasks_file, enum fred_sys_mode mode);
+                  const char *hw_tasks_file, enum fred_sys_mode mode);
 
 void fred_sys_free(struct fred_sys *self);
 

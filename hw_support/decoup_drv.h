@@ -18,12 +18,10 @@
 //---------------------------------------------------------------------------------------------
 
 struct decoup_drv {
+    void (*decouple)(struct decoup_drv *self);
+    void (*couple)(struct decoup_drv *self);
 
-	void (*decouple)(struct decoup_drv *self);
-
-	void (*couple)(struct decoup_drv *self);
-
-	void (*free)(struct decoup_drv *self);
+    void (*free)(struct decoup_drv *self);
 };
 
 
@@ -32,25 +30,25 @@ struct decoup_drv {
 static inline
 void decoup_drv_decouple(struct decoup_drv *self)
 {
-	assert(self);
+    assert(self);
 
-	self->decouple(self);
+    self->decouple(self);
 }
 
 static inline
 void decoup_drv_couple(struct decoup_drv *self)
 {
-	assert(self);
+    assert(self);
 
-	self->couple(self);
+    self->couple(self);
 }
 
 static inline
 void decoup_drv_free(struct decoup_drv *self)
 {
-	assert(self);
+    assert(self);
 
-	self->free(self);
+    self->free(self);
 }
 
 //---------------------------------------------------------------------------------------------

@@ -21,14 +21,14 @@
 //---------------------------------------------------------------------------------------------
 
 struct devcfg_drv_fpga_mgr {
-	// ------------------------//
-	struct devcfg_drv devcfg_drv;
-	// ------------------------//
+    // ------------------------//
+    struct devcfg_drv devcfg_drv;
+    // ------------------------//
 
-	int phy_bit_rcfg_done_fd;
-	int phy_bit_rcfg_start_fd;
-	int phy_bit_addr_fd;
-	int phy_bit_size_fd;
+    int phy_bit_rcfg_done_fd;
+    int phy_bit_rcfg_start_fd;
+    int phy_bit_addr_fd;
+    int phy_bit_size_fd;
 };
 
 //---------------------------------------------------------------------------------------------
