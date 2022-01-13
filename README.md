@@ -1,4 +1,7 @@
 # Fred for Linux
+
+> Notice: this repository is only for reference purposes. Further developments of the FRED framework will be hosted [here](https://github.com/fred-framework).
+
 Fred for Linux. Experimental support.
 Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
 <marco.pag(at)outlook.com>
