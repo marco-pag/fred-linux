@@ -1,11 +1,6 @@
 # Fred for Linux
 
-> Notice: this repository is only for reference purposes. Further developments of the FRED framework will be hosted [here](https://github.com/fred-framework).
-
 Experimental implementation of FRED for Linux. FRED is a framework for supporting predictable hardware accelerations on SoC-FPGA platforms using dynamic partial reconfiguration. 
-
-Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
-<marco.pag(at)outlook.com>
 
 Tutorial and how to build available [here](https://gitlab.retis.santannapisa.it/m.pagani/fred-docs).
 
@@ -23,3 +18,5 @@ Tutorial and how to build available [here](https://gitlab.retis.santannapisa.it/
     keywords = {Heterogeneous computing, FPGA, DPR, Real-time, Linux}
     }
 
+Copyright (C) 2018-2021, Marco Pagani, ReTiS Lab.
+<marco.pag(at)outlook.com>
